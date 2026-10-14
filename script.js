@@ -1,4 +1,3 @@
-// DATA SISWA KELAS 6A & 6B
 const studentsDataByClass = {
     "6A": [
         "ABID AQILAH WAHYUDI", "AINUN HAKIMAH", "AINUN NUR AZIZAH A", "AMELIA AHMAD",
@@ -18,7 +17,6 @@ const studentsDataByClass = {
     ]
 };
 
-// 3 PAKET TEMA MASING-MASING 10 OBJEK
 const packageShapes = {
     "sekolah": ["pulpen", "buku", "tas", "pensil", "penggaris", "penghapus", "kotak_pensil", "gunting", "jangka", "buku_gambar"],
     "dapur": ["gelas", "piring", "sendok", "kompor", "pisau", "wajan", "mangkuk", "garpu", "botol", "panci"],
@@ -80,7 +78,6 @@ function shuffleArray(array) {
     return arr;
 }
 
-// FUNGSI PILIH KELAS
 function selectClass(className) {
     selectedClass = className;
     document.querySelectorAll('.btn-class').forEach(btn => {
@@ -93,7 +90,6 @@ function selectClass(className) {
     initClassPreview();
 }
 
-// FUNGSI PILIH PAKET
 function selectPackage(pkgName) {
     selectedPackage = pkgName;
     document.querySelectorAll('.btn-package').forEach(btn => {
@@ -215,7 +211,7 @@ function loadStudentTurn() {
 
     const currentStudent = studentsList[currentIndex];
     currentPlayerEl.textContent = currentStudent.name;
-    targetBadgeEl.textContent = `Tugas: ${currentStudent.shape.toUpperCase().replace('_', ' ')}`;
+    targetBadgeEl.textContent = `Tugas 3D: ${currentStudent.shape.toUpperCase().replace('_', ' ')}`;
 
     ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     drawGuideShape(currentStudent.shape, gCtx, guideCanvas.width, guideCanvas.height);
@@ -231,127 +227,136 @@ function loadStudentTurn() {
     renderSidebarList();
 }
 
-// 30 FUNGSI PANDUAN GAMBAR (3 PAKET x 10 OBJEK)
+// 30 FUNGSI PANDUAN GAMBAR 3D PERSPEKTIF REALISTIS
 function drawGuideShape(shape, targetCtx, w, h) {
     targetCtx.clearRect(0, 0, w, h);
-    targetCtx.strokeStyle = "rgba(225, 29, 72, 0.7)"; 
+    targetCtx.strokeStyle = "rgba(225, 29, 72, 0.75)"; 
     targetCtx.lineWidth = 3;
     targetCtx.setLineDash([6, 6]);
     targetCtx.beginPath();
 
-    // PAKET SEKOLAH
+    // 3D SEKOLAH
     if (shape === 'pulpen') {
-        targetCtx.strokeRect(340, 100, 40, 240);
-        targetCtx.moveTo(340, 100); targetCtx.lineTo(360, 50); targetCtx.lineTo(380, 100); targetCtx.closePath();
+        targetCtx.moveTo(330, 80); targetCtx.lineTo(370, 80); targetCtx.lineTo(360, 320); targetCtx.lineTo(340, 320); targetCtx.closePath();
+        targetCtx.moveTo(330, 80); targetCtx.lineTo(350, 40); targetCtx.lineTo(370, 80);
+        targetCtx.moveTo(345, 80); targetCtx.lineTo(355, 320); // Efek silinder 3d
     } else if (shape === 'buku') {
-        targetCtx.strokeRect(220, 120, 280, 200);
-        targetCtx.moveTo(360, 120); targetCtx.lineTo(360, 320);
+        targetCtx.moveTo(220, 140); targetCtx.lineTo(360, 100); targetCtx.lineTo(500, 140); targetCtx.lineTo(360, 180); targetCtx.closePath();
+        targetCtx.moveTo(220, 140); targetCtx.lineTo(220, 300); targetCtx.lineTo(360, 340); targetCtx.lineTo(360, 180);
+        targetCtx.moveTo(500, 140); targetCtx.lineTo(500, 300); targetCtx.lineTo(360, 340);
     } else if (shape === 'tas') {
-        targetCtx.strokeRect(250, 170, 220, 170);
-        targetCtx.strokeRect(310, 230, 100, 110);
-        targetCtx.arc(360, 170, 45, Math.PI, 0);
+        targetCtx.moveTo(260, 180); targetCtx.lineTo(460, 180); targetCtx.lineTo(480, 330); targetCtx.lineTo(240, 330); targetCtx.closePath();
+        targetCtx.strokeRect(310, 230, 100, 100);
+        targetCtx.arc(360, 180, 50, Math.PI, 0);
     } else if (shape === 'pensil') {
-        targetCtx.strokeRect(330, 80, 60, 240);
-        targetCtx.moveTo(330, 80); targetCtx.lineTo(360, 30); targetCtx.lineTo(390, 80); targetCtx.closePath();
+        targetCtx.moveTo(320, 70); targetCtx.lineTo(380, 70); targetCtx.lineTo(370, 330); targetCtx.lineTo(330, 330); targetCtx.closePath();
+        targetCtx.moveTo(320, 70); targetCtx.lineTo(350, 20); targetCtx.lineTo(380, 70);
     } else if (shape === 'penggaris') {
-        targetCtx.strokeRect(200, 200, 320, 60);
-        targetCtx.moveTo(240, 200); targetCtx.lineTo(240, 230);
-        targetCtx.moveTo(280, 200); targetCtx.lineTo(280, 230);
-        targetCtx.moveTo(320, 200); targetCtx.lineTo(320, 230);
+        targetCtx.moveTo(180, 220); targetCtx.lineTo(500, 180); targetCtx.lineTo(520, 230); targetCtx.lineTo(200, 270); targetCtx.closePath();
     } else if (shape === 'penghapus') {
-        targetCtx.strokeRect(260, 180, 200, 100);
-        targetCtx.moveTo(340, 180); targetCtx.lineTo(340, 280);
+        targetCtx.moveTo(250, 200); targetCtx.lineTo(420, 170); targetCtx.lineTo(450, 250); targetCtx.lineTo(280, 280); targetCtx.closePath();
+        targetCtx.moveTo(420, 170); targetCtx.lineTo(420, 230); targetCtx.lineTo(450, 250);
     } else if (shape === 'kotak_pensil') {
-        targetCtx.strokeRect(210, 170, 300, 120);
-        targetCtx.strokeRect(230, 190, 260, 80);
+        targetCtx.moveTo(200, 180); targetCtx.lineTo(480, 150); targetCtx.lineTo(510, 260); targetCtx.lineTo(230, 290); targetCtx.closePath();
+        targetCtx.moveTo(200, 180); targetCtx.lineTo(200, 230); targetCtx.lineTo(230, 290);
+        targetCtx.moveTo(480, 150); targetCtx.lineTo(510, 210); targetCtx.lineTo(510, 260);
     } else if (shape === 'gunting') {
-        targetCtx.arc(290, 290, 30, 0, Math.PI*2);
-        targetCtx.arc(430, 290, 30, 0, Math.PI*2);
-        targetCtx.moveTo(310, 270); targetCtx.lineTo(410, 120);
+        targetCtx.arc(280, 290, 35, 0, Math.PI*2);
+        targetCtx.arc(440, 290, 35, 0, Math.PI*2);
+        targetCtx.moveTo(300, 270); targetCtx.lineTo(420, 110);
+        targetCtx.moveTo(310, 300); targetCtx.lineTo(430, 130);
     } else if (shape === 'jangka') {
-        targetCtx.moveTo(360, 80); targetCtx.lineTo(280, 340);
-        targetCtx.moveTo(360, 80); targetCtx.lineTo(440, 340);
-        targetCtx.arc(360, 80, 20, 0, Math.PI*2);
+        targetCtx.moveTo(360, 70); targetCtx.lineTo(260, 350); targetCtx.lineTo(280, 350); targetCtx.lineTo(360, 100); targetCtx.closePath();
+        targetCtx.moveTo(360, 70); targetCtx.lineTo(460, 350); targetCtx.lineTo(440, 350); targetCtx.lineTo(360, 100); targetCtx.closePath();
     } else if (shape === 'buku_gambar') {
-        targetCtx.strokeRect(200, 100, 320, 240);
-        targetCtx.strokeRect(230, 130, 260, 180);
+        targetCtx.moveTo(180, 120); targetCtx.lineTo(360, 90); targetCtx.lineTo(540, 120); targetCtx.lineTo(360, 150); targetCtx.closePath();
+        targetCtx.moveTo(180, 120); targetCtx.lineTo(180, 330); targetCtx.lineTo(360, 360); targetCtx.lineTo(360, 150);
+        targetCtx.moveTo(540, 120); targetCtx.lineTo(540, 330); targetCtx.lineTo(360, 360);
 
-    // PAKET DAPUR
+    // 3D DAPUR
     } else if (shape === 'gelas') {
-        targetCtx.moveTo(270, 140); targetCtx.lineTo(450, 140); targetCtx.lineTo(420, 320); targetCtx.lineTo(300, 320); targetCtx.closePath();
-        targetCtx.arc(440, 220, 30, -Math.PI/2, Math.PI/2);
+        targetCtx.ellipse(360, 130, 90, 35, 0, 0, Math.PI*2);
+        targetCtx.moveTo(270, 130); targetCtx.lineTo(300, 340); targetCtx.lineTo(420, 340); targetCtx.lineTo(450, 130);
+        targetCtx.ellipse(360, 340, 60, 25, 0, 0, Math.PI*2);
+        targetCtx.arc(435, 235, 35, -Math.PI/2, Math.PI/2);
     } else if (shape === 'piring') {
-        targetCtx.ellipse(360, 220, 160, 80, 0, 0, Math.PI*2);
-        targetCtx.ellipse(360, 220, 100, 50, 0, 0, Math.PI*2);
+        targetCtx.ellipse(360, 200, 180, 90, 0, 0, Math.PI*2);
+        targetCtx.ellipse(360, 200, 150, 75, 0, 0, Math.PI*2);
+        targetCtx.ellipse(360, 215, 90, 45, 0, 0, Math.PI*2);
     } else if (shape === 'sendok') {
-        targetCtx.arc(360, 120, 45, 0, Math.PI*2);
-        targetCtx.strokeRect(345, 165, 30, 160);
+        targetCtx.ellipse(360, 130, 50, 70, 0, 0, Math.PI*2);
+        targetCtx.moveTo(350, 195); targetCtx.lineTo(340, 340); targetCtx.lineTo(370, 340); targetCtx.lineTo(370, 195); targetCtx.closePath();
     } else if (shape === 'kompor') {
-        targetCtx.strokeRect(220, 180, 280, 150);
-        targetCtx.arc(290, 240, 35, 0, Math.PI*2);
-        targetCtx.arc(430, 240, 35, 0, Math.PI*2);
+        targetCtx.moveTo(200, 200); targetCtx.lineTo(520, 200); targetCtx.lineTo(560, 330); targetCtx.lineTo(160, 330); targetCtx.closePath();
+        targetCtx.ellipse(300, 250, 40, 20, 0, 0, Math.PI*2);
+        targetCtx.ellipse(420, 250, 40, 20, 0, 0, Math.PI*2);
     } else if (shape === 'pisau') {
-        targetCtx.strokeRect(340, 220, 40, 120);
-        targetCtx.moveTo(340, 220); targetCtx.lineTo(340, 100); targetCtx.lineTo(480, 220); targetCtx.closePath();
+        targetCtx.moveTo(330, 230); targetCtx.lineTo(390, 230); targetCtx.lineTo(380, 350); targetCtx.lineTo(340, 350); targetCtx.closePath();
+        targetCtx.moveTo(330, 230); targetCtx.lineTo(330, 100); targetCtx.lineTo(520, 230); targetCtx.closePath();
     } else if (shape === 'wajan') {
-        targetCtx.arc(360, 220, 110, 0, Math.PI);
-        targetCtx.strokeRect(470, 200, 100, 20);
+        targetCtx.ellipse(360, 210, 130, 55, 0, 0, Math.PI*2);
+        targetCtx.moveTo(230, 210); targetCtx.lineTo(270, 310); targetCtx.lineTo(450, 310); targetCtx.lineTo(490, 210);
+        targetCtx.moveTo(490, 210); targetCtx.lineTo(600, 180); // Gagang 3D
     } else if (shape === 'mangkuk') {
-        targetCtx.arc(360, 180, 120, 0, Math.PI);
-        targetCtx.strokeRect(280, 300, 160, 20);
+        targetCtx.ellipse(360, 170, 130, 50, 0, 0, Math.PI*2);
+        targetCtx.moveTo(230, 170); targetCtx.lineTo(280, 320); targetCtx.lineTo(440, 320); targetCtx.lineTo(490, 170);
+        targetCtx.ellipse(360, 320, 80, 30, 0, 0, Math.PI*2);
     } else if (shape === 'garpu') {
-        targetCtx.strokeRect(345, 180, 30, 160);
-        targetCtx.moveTo(345, 180); targetCtx.lineTo(345, 110);
-        targetCtx.moveTo(360, 180); targetCtx.lineTo(360, 110);
-        targetCtx.moveTo(375, 180); targetCtx.lineTo(375, 110);
+        targetCtx.moveTo(345, 200); targetCtx.lineTo(375, 200); targetCtx.lineTo(370, 350); targetCtx.lineTo(350, 350); targetCtx.closePath();
+        targetCtx.moveTo(345, 200); targetCtx.lineTo(340, 100);
+        targetCtx.moveTo(355, 200); targetCtx.lineTo(355, 100);
+        targetCtx.moveTo(365, 200); targetCtx.lineTo(370, 100);
     } else if (shape === 'botol') {
-        targetCtx.strokeRect(330, 100, 60, 40);
-        targetCtx.strokeRect(300, 140, 120, 200);
+        targetCtx.strokeRect(330, 80, 60, 50);
+        targetCtx.moveTo(330, 130); targetCtx.lineTo(270, 170); targetCtx.lineTo(270, 350); targetCtx.lineTo(450, 350); targetCtx.lineTo(450, 170); targetCtx.lineTo(390, 130);
+        targetCtx.ellipse(360, 350, 90, 30, 0, 0, Math.PI*2);
     } else if (shape === 'panci') {
-        targetCtx.strokeRect(240, 160, 240, 160);
-        targetCtx.arc(360, 160, 60, Math.PI, 0);
-        targetCtx.strokeRect(180, 200, 60, 20);
+        targetCtx.moveTo(230, 180); targetCtx.lineTo(490, 180); targetCtx.lineTo(470, 340); targetCtx.lineTo(250, 340); targetCtx.closePath();
+        targetCtx.ellipse(360, 180, 130, 35, 0, 0, Math.PI*2);
+        targetCtx.strokeRect(170, 220, 60, 25); targetCtx.strokeRect(490, 220, 60, 25);
 
-    // PAKET PEMANDANGAN
+    // 3D PEMANDANGAN
     } else if (shape === 'pohon') {
-        targetCtx.strokeRect(335, 230, 50, 140);
-        targetCtx.arc(360, 160, 100, 0, Math.PI * 2);
+        targetCtx.moveTo(335, 230); targetCtx.lineTo(385, 230); targetCtx.lineTo(395, 370); targetCtx.lineTo(325, 370); targetCtx.closePath();
+        targetCtx.arc(360, 150, 95, 0, Math.PI*2);
+        targetCtx.arc(310, 180, 70, 0, Math.PI*2);
+        targetCtx.arc(410, 180, 70, 0, Math.PI*2);
     } else if (shape === 'gunung') {
-        targetCtx.moveTo(150, 340); targetCtx.lineTo(360, 120); targetCtx.lineTo(570, 340); targetCtx.closePath();
-        targetCtx.moveTo(250, 340); targetCtx.lineTo(470, 180); targetCtx.lineTo(600, 340);
+        targetCtx.moveTo(120, 360); targetCtx.lineTo(360, 100); targetCtx.lineTo(600, 360); targetCtx.closePath();
+        targetCtx.moveTo(240, 360); targetCtx.lineTo(480, 160); targetCtx.lineTo(650, 360);
+        targetCtx.moveTo(360, 100); targetCtx.lineTo(390, 160); targetCtx.lineTo(360, 360); // Garis sisi 3D
     } else if (shape === 'rumah') {
-        targetCtx.strokeRect(210, 180, 300, 180);
-        targetCtx.moveTo(170, 180); targetCtx.lineTo(360, 70); targetCtx.lineTo(550, 180);
-        targetCtx.strokeRect(325, 260, 70, 100);
-        targetCtx.strokeRect(240, 210, 55, 55); targetCtx.strokeRect(425, 210, 55, 55);
+        targetCtx.moveTo(210, 200); targetCtx.lineTo(420, 160); targetCtx.lineTo(550, 220); targetCtx.lineTo(340, 260); targetCtx.closePath(); // Atap 3D
+        targetCtx.moveTo(210, 200); targetCtx.lineTo(210, 360); targetCtx.lineTo(340, 400); targetCtx.lineTo(340, 260); // Dinding Kiri
+        targetCtx.moveTo(340, 260); targetCtx.lineTo(340, 400); targetCtx.lineTo(550, 340); targetCtx.lineTo(550, 220); // Dinding Kanan
     } else if (shape === 'rumput') {
-        for(let i=180; i<540; i+=30) {
-            targetCtx.moveTo(i, 340); targetCtx.lineTo(i+10, 280); targetCtx.lineTo(i+20, 340);
+        for(let i=160; i<560; i+=35) {
+            targetCtx.moveTo(i, 360); targetCtx.lineTo(i+10, 290); targetCtx.lineTo(i+25, 360);
         }
     } else if (shape === 'matahari') {
-        targetCtx.arc(360, 180, 60, 0, Math.PI * 2);
+        targetCtx.arc(360, 180, 65, 0, Math.PI * 2);
         for(let a=0; a<360; a+=45) {
-            let rx = 360 + Math.cos(a*Math.PI/180)*85;
-            let ry = 180 + Math.sin(a*Math.PI/180)*85;
-            targetCtx.moveTo(360 + Math.cos(a*Math.PI/180)*60, 180 + Math.sin(a*Math.PI/180)*60);
+            let rx = 360 + Math.cos(a*Math.PI/180)*95;
+            let ry = 180 + Math.sin(a*Math.PI/180)*95;
+            targetCtx.moveTo(360 + Math.cos(a*Math.PI/180)*65, 180 + Math.sin(a*Math.PI/180)*65);
             targetCtx.lineTo(rx, ry);
         }
     } else if (shape === 'awan') {
-        targetCtx.arc(320, 200, 40, 0, Math.PI*2);
-        targetCtx.arc(370, 180, 50, 0, Math.PI*2);
-        targetCtx.arc(420, 200, 40, 0, Math.PI*2);
+        targetCtx.arc(310, 200, 45, 0, Math.PI*2);
+        targetCtx.arc(370, 170, 60, 0, Math.PI*2);
+        targetCtx.arc(430, 200, 45, 0, Math.PI*2);
+        targetCtx.ellipse(370, 220, 90, 25, 0, 0, Math.PI*2);
     } else if (shape === 'bunga') {
-        targetCtx.strokeRect(355, 200, 10, 140);
-        targetCtx.arc(360, 160, 35, 0, Math.PI * 2);
+        targetCtx.moveTo(355, 200); targetCtx.lineTo(365, 200); targetCtx.lineTo(370, 360); targetCtx.lineTo(350, 360); targetCtx.closePath();
+        targetCtx.arc(360, 160, 40, 0, Math.PI * 2);
     } else if (shape === 'sungai') {
-        targetCtx.moveTo(320, 140); targetCtx.quadraticCurveTo(400, 240, 280, 340);
-        targetCtx.moveTo(400, 140); targetCtx.quadraticCurveTo(480, 240, 360, 340);
+        targetCtx.moveTo(300, 120); targetCtx.bezierCurveTo(450, 220, 250, 280, 380, 380);
+        targetCtx.moveTo(350, 120); targetCtx.bezierCurveTo(500, 220, 300, 280, 430, 380);
     } else if (shape === 'burung') {
-        targetCtx.arc(330, 200, 30, Math.PI, 0);
-        targetCtx.arc(390, 200, 30, Math.PI, 0);
+        targetCtx.moveTo(280, 200); targetCtx.quadraticCurveTo(320, 160, 360, 200); targetCtx.quadraticCurveTo(400, 160, 440, 200);
     } else if (shape === 'batu') {
-        targetCtx.moveTo(250, 340); targetCtx.quadraticCurveTo(300, 250, 360, 340);
-        targetCtx.moveTo(340, 340); targetCtx.quadraticCurveTo(420, 270, 480, 340);
+        targetCtx.moveTo(220, 360); targetCtx.bezierCurveTo(240, 240, 350, 220, 420, 360); targetCtx.closePath();
+        targetCtx.moveTo(380, 360); targetCtx.bezierCurveTo(420, 270, 500, 290, 530, 360); targetCtx.closePath();
     }
     
     targetCtx.stroke();
@@ -473,11 +478,11 @@ function calculateBonusEvaluationScore(canvasElem, shape, totalStrokes) {
 
     let feedbackMsg = "";
     if (keyCoveragePercent >= 80 && totalStrokes <= 25) {
-        feedbackMsg = "🌟 Luar biasa! Garis kunci tertutup sempurna dan goresan sangat efisien rapi.";
+        feedbackMsg = "🌟 Luar biasa! Garis kunci perspektif 3D tertutup sempurna dan goresan sangat rapi.";
     } else if (keyCoveragePercent >= 50) {
-        feedbackMsg = "👍 Bagus! Cukup baik menutup pola, pertahankan ketepatan dan efisiensi garis.";
+        feedbackMsg = "👍 Bagus! Cukup baik menutup pola 3D, pertahankan ketepatan dan efisiensi garis.";
     } else {
-        feedbackMsg = "⚠️ Kurang akurat. Garis putus-putus kunci masih banyak yang belum tertutup rapat.";
+        feedbackMsg = "⚠️ Kurang akurat. Garis panduan 3D masih banyak yang belum tertutup rapat.";
     }
 
     return {
