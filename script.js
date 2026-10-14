@@ -1,16 +1,26 @@
-// DAFTAR NAMA 25 SISWA KELAS 6A
-const rawStudentsNames = [
-    "ABID AQILAH WAHYUDI", "AINUN HAKIMAH", "AINUN NUR AZIZAH A", "AMELIA AHMAD",
-    "ANDI FAISYA SYAHIRA", "ANDI MUHAMMAD FAQIH AIRY H", "CAHYA AINUN", "DZAKY",
-    "FARDHAN ZAKI JASMAR", "FEBY KHAIRUNNISA", "KHAIRA NAJWA BAZIMA", "LISNA YANTI",
-    "MUH REVAN APRILIAN", "MUH RIFKI AL FAHREZA Z", "MUH. ARIFKI", "MUH. MIFTAHUL YAFI ASIS",
-    "MUH. RAFLI", "MUHAMMAD ARAS QURUSYA", "MUHAMMAD SYAWAL", "NAYLA SALSABILLAH",
-    "NURUL ADIVA AMRAN", "ST ASSYURAH JUHARBI", "SYAFWAAN SABQI", "YUSUF GIBRAN Y", "ZAM ZAMMY KHAIRIL MALIKI ABHAL"
-];
+// DATA SISWA KELAS 6A & 6B
+const studentsDataByClass = {
+    "6A": [
+        "ABID AQILAH WAHYUDI", "AINUN HAKIMAH", "AINUN NUR AZIZAH A", "AMELIA AHMAD",
+        "ANDI FAISYA SYAHIRA", "ANDI MUHAMMAD FAQIH AIRY H", "CAHYA AINUN", "DZAKY",
+        "FARDHAN ZAKI JASMAR", "FEBY KHAIRUNNISA", "KHAIRA NAJWA BAZIMA", "LISNA YANTI",
+        "MUH REVAN APRILIAN", "MUH RIFKI AL FAHREZA Z", "MUH. ARIFKI", "MUH. MIFTAHUL YAFI ASIS",
+        "MUH. RAFLI", "MUHAMMAD ARAS QURUSYA", "MUHAMMAD SYAWAL", "NAYLA SALSABILLAH",
+        "NURUL ADIVA AMRAN", "ST ASSYURAH JUHARBI", "SYAFWAAN SABQI", "YUSUF GIBRAN Y", "ZAM ZAMMY KHAIRIL MALIKI ABHAL"
+    ],
+    "6B": [
+        "AIRIN RAHMI ANDINIANINDYA", "JINAN RISQIANNISA RAMADANI", "ANNISA SALSABILA", "ASYKAR ALFATIH",
+        "CAHAYA AURA NAZHIF", "DEWA AYU RESTTI GAURI", "DIAN AFIKA", "FACHRU RAFAY",
+        "FITRAH RAMADHAN ABDILLA", "JANUAR MUSA P", "KHARMAWAN", "M HILAL FIQRI AUTHAR R",
+        "MIRZA SIDDIQIYAH RUSADY", "MUH FARIS GHAIZAN", "MUH MUHAIMIN FAIZAL. M", "MUH NAUFAL HAFIDZ",
+        "MUH. AL HAFIDZ NASWAR", "MUH. AL QADRI", "MUH. MIRZA UKAIL", "MUHAMMAD ALGHAZHALY",
+        "MUHAMMAD NUR", "SITI ALMIRAH UTARI", "MAHYA SANJAYA", "DZAKIYYA AZALIYYA", "AZIDAN DHIYAULHAQ"
+    ]
+};
 
-// DAFTAR PILIHAN BENTUK OBJEK
 const availableShapes = ["rumah", "mobil", "pohon", "bintang", "kapal", "bola", "cangkir", "ikan"];
 
+let selectedClass = "6A";
 let studentsList = [];
 let studentData = {};
 let currentIndex = 0;
@@ -19,12 +29,10 @@ let countdown;
 let timeLeft = 120;
 let isGameActive = false;
 
-// VARIABEL RIWAYAT UNDO / REDO
 let historySteps = [];
 let historyStepIndex = -1;
 let clickStrokeCount = 0;
 
-// ELEMENT REF
 const setupPanel = document.getElementById('setup-panel');
 const gamePanel = document.getElementById('game-panel');
 const finishPanel = document.getElementById('finish-panel');
@@ -36,7 +44,12 @@ const currentPlayerEl = document.getElementById('current-player');
 const targetBadgeEl = document.getElementById('target-object-badge');
 const timerEl = document.getElementById('timer');
 const warningOverlay = document.getElementById('warning-overlay');
+const timeupOverlay = document.getElementById('timeup-overlay');
+const timeupMessage = document.getElementById('timeup-message');
 const studentListEl = document.getElementById('student-list');
+const sidebarCountEl = document.getElementById('sidebar-count');
+const sidebarClassLabel = document.getElementById('sidebar-class-label');
+const headerClassBadge = document.getElementById('header-class-badge');
 
 const drawingCanvas = document.getElementById('drawingCanvas');
 const ctx = drawingCanvas.getContext('2d');
@@ -52,7 +65,6 @@ const undoBtn = document.getElementById('undo-btn');
 const redoBtn = document.getElementById('redo-btn');
 let isEraser = false;
 
-// FUNGSI MENGACAK ARRAY (FISHER-YATES SHUFFLE)
 function shuffleArray(array) {
     let arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -62,27 +74,60 @@ function shuffleArray(array) {
     return arr;
 }
 
-// INISIALISASI SESI BARU DENGAN PENGACAKAN SISWA & OBJEK
+// FUNGSI PILIH KELAS
+function selectClass(className) {
+    selectedClass = className;
+    document.querySelectorAll('.btn-class').forEach(btn => {
+        if (btn.getAttribute('data-class') === className) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    initClassPreview();
+}
+
+function initClassPreview() {
+    const rawNames = studentsDataByClass[selectedClass];
+    sidebarCountEl.textContent = rawNames.length;
+    sidebarClassLabel.textContent = `Kelas ${selectedClass} - Seni Rupa`;
+    headerClassBadge.textContent = `Kelas ${selectedClass}`;
+
+    studentListEl.innerHTML = '';
+    rawNames.forEach((name, idx) => {
+        const li = document.createElement('li');
+        li.className = `student-item`;
+        li.innerHTML = `
+            <span class="student-name">${idx + 1}. ${name}</span>
+            <span class="student-status status-pending">Siap</span>
+        `;
+        studentListEl.appendChild(li);
+    });
+}
+
 function initRandomSession() {
-    const shuffledNames = shuffleArray(rawStudentsNames);
+    const rawNames = studentsDataByClass[selectedClass];
+    const shuffledNames = shuffleArray(rawNames);
     studentsList = shuffledNames.map((name) => {
         const randomShape = availableShapes[Math.floor(Math.random() * availableShapes.length)];
         return { name: name, shape: randomShape };
     });
 }
 
-initRandomSession();
-renderSidebarList();
+initClassPreview();
 
 startBtn.addEventListener('click', startEntireGame);
 nextTurnBtn.addEventListener('click', saveAndNextStudent);
 stopBtn.addEventListener('click', confirmStop);
-restartBtn.addEventListener('click', () => location.reload());
+restartBtn.addEventListener('click', () => {
+    finishPanel.classList.add('hidden');
+    setupPanel.classList.remove('hidden');
+    initClassPreview();
+});
 
 undoBtn.addEventListener('click', undoCanvas);
 redoBtn.addEventListener('click', redoCanvas);
 
-// SHORTCUT KEYBOARD CTRL+Z & CTRL+Y
 document.addEventListener('keydown', (e) => {
     if (!isGameActive) return;
     if (e.ctrlKey && e.key.toLowerCase() === 'z') {
@@ -172,7 +217,6 @@ function drawGuideShape(shape, targetCtx, w, h) {
     targetCtx.lineWidth = 3;
     targetCtx.setLineDash([6, 6]);
 
-    // Koordinat disesuaikan secara proporsional dengan ukuran kanvas baru (720x440)
     targetCtx.beginPath();
     if (shape === 'rumah') {
         targetCtx.strokeRect(210, 180, 300, 180);
@@ -226,9 +270,36 @@ function startTimer() {
         timerEl.textContent = timeLeft;
         if (timeLeft <= 0) {
             clearInterval(countdown);
-            saveAndNextStudent();
+            handleTimeUp();
         }
     }, 1000);
+}
+
+function handleTimeUp() {
+    const student = studentsList[currentIndex];
+    
+    const scoreResult = calculateBonusEvaluationScore(drawingCanvas, student.shape, clickStrokeCount);
+    studentData[student.name] = {
+        dataUrl: drawingCanvas.toDataURL(),
+        score: scoreResult.totalScore,
+        coverage: scoreResult.keyCoverage,
+        efficiency: scoreResult.efficiencyScore,
+        feedback: scoreResult.feedback
+    };
+
+    const nextIndex = currentIndex + 1;
+    if (nextIndex < studentsList.length) {
+        timeupMessage.innerHTML = `Waktu habis!<br>Selanjutnya: <strong style="color:#38bdf8;">${studentsList[nextIndex].name}</strong>`;
+    } else {
+        timeupMessage.innerHTML = `Waktu habis!<br>Sesi menggambar selesai untuk semua siswa.`;
+    }
+    timeupOverlay.style.display = 'flex';
+}
+
+function proceedNextAfterTimeUp() {
+    timeupOverlay.style.display = 'none';
+    currentIndex++;
+    loadStudentTurn();
 }
 
 function saveAndNextStudent() {
@@ -386,7 +457,7 @@ function displayStudentResult(index) {
     const student = studentsList[index];
     const data = studentData[student.name];
 
-    document.getElementById('result-student-name').textContent = `${index + 1}. ${student.name} (${student.shape.toUpperCase()})`;
+    document.getElementById('result-student-name').textContent = `Hasil Gambaran: ${student.name} (${student.shape.toUpperCase()})`;
 
     const resCanvas = document.getElementById('resultCanvas');
     const resCtx = resCanvas.getContext('2d');
