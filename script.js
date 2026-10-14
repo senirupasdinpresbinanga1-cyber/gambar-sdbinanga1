@@ -1,32 +1,17 @@
-// DAFTAR 25 SISWA KELAS 6A DENGAN TEMPLATE OBJEK BERBEDA
-const studentsList = [
-    { name: "ABID AQILAH WAHYUDI", shape: "rumah" },
-    { name: "AINUN HAKIMAH", shape: "mobil" },
-    { name: "AINUN NUR AZIZAH A", shape: "pohon" },
-    { name: "AMELIA AHMAD", shape: "bintang" },
-    { name: "ANDI FAISYA SYAHIRA", shape: "kapal" },
-    { name: "ANDI MUHAMMAD FAQIH AIRY H", shape: "bunga" },
-    { name: "CAHYA AINUN", shape: "cangkir" },
-    { name: "DZAKY", shape: "ikan" },
-    { name: "FARDHAN ZAKI JASMAR", shape: "rumah" },
-    { name: "FEBY KHAIRUNNISA", shape: "mobil" },
-    { name: "KHAIRA NAJWA BAZIMA", shape: "pohon" },
-    { name: "LISNA YANTI", shape: "bintang" },
-    { name: "MUH REVAN APRILIAN", shape: "kapal" },
-    { name: "MUH RIFKI AL FAHREZA Z", shape: "bunga" },
-    { name: "MUH. ARIFKI", shape: "cangkir" },
-    { name: "MUH. MIFTAHUL YAFI ASIS", shape: "ikan" },
-    { name: "MUH. RAFLI", shape: "rumah" },
-    { name: "MUHAMMAD ARAS QURUSYA", shape: "mobil" },
-    { name: "MUHAMMAD SYAWAL", shape: "pohon" },
-    { name: "NAYLA SALSABILLAH", shape: "bintang" },
-    { name: "NURUL ADIVA AMRAN", shape: "kapal" },
-    { name: "ST ASSYURAH JUHARBI", shape: "bunga" },
-    { name: "SYAFWAAN SABQI", shape: "cangkir" },
-    { name: "YUSUF GIBRAN Y", shape: "ikan" },
-    { name: "ZAM ZAMMY KHAIRIL MALIKI ABHAL", shape: "rumah" }
+// DAFTAR NAMA 25 SISWA KELAS 6A
+const rawStudentsNames = [
+    "ABID AQILAH WAHYUDI", "AINUN HAKIMAH", "AINUN NUR AZIZAH A", "AMELIA AHMAD",
+    "ANDI FAISYA SYAHIRA", "ANDI MUHAMMAD FAQIH AIRY H", "CAHYA AINUN", "DZAKY",
+    "FARDHAN ZAKI JASMAR", "FEBY KHAIRUNNISA", "KHAIRA NAJWA BAZIMA", "LISNA YANTI",
+    "MUH REVAN APRILIAN", "MUH RIFKI AL FAHREZA Z", "MUH. ARIFKI", "MUH. MIFTAHUL YAFI ASIS",
+    "MUH. RAFLI", "MUHAMMAD ARAS QURUSYA", "MUHAMMAD SYAWAL", "NAYLA SALSABILLAH",
+    "NURUL ADIVA AMRAN", "ST ASSYURAH JUHARBI", "SYAFWAAN SABQI", "YUSUF GIBRAN Y", "ZAM ZAMMY KHAIRIL MALIKI ABHAL"
 ];
 
+// DAFTAR PILIHAN BENTUK OBJEK
+const availableShapes = ["rumah", "mobil", "pohon", "bintang", "kapal", "bola", "cangkir", "ikan"];
+
+let studentsList = [];
 let studentData = {};
 let currentIndex = 0;
 let viewingResultIndex = 0;
@@ -37,7 +22,7 @@ let isGameActive = false;
 // VARIABEL RIWAYAT UNDO / REDO
 let historySteps = [];
 let historyStepIndex = -1;
-let clickStrokeCount = 0; // Menghitung total klik-tahan (mousedown) untuk efisiensi goresan
+let clickStrokeCount = 0;
 
 // ELEMENT REF
 const setupPanel = document.getElementById('setup-panel');
@@ -67,7 +52,26 @@ const undoBtn = document.getElementById('undo-btn');
 const redoBtn = document.getElementById('redo-btn');
 let isEraser = false;
 
-// INIT
+// FUNGSI MENGACAK ARRAY (FISHER-YATES SHUFFLE)
+function shuffleArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+// INISIALISASI SESI BARU DENGAN PENGACAKAN SISWA & OBJEK
+function initRandomSession() {
+    const shuffledNames = shuffleArray(rawStudentsNames);
+    studentsList = shuffledNames.map((name) => {
+        const randomShape = availableShapes[Math.floor(Math.random() * availableShapes.length)];
+        return { name: name, shape: randomShape };
+    });
+}
+
+initRandomSession();
 renderSidebarList();
 
 startBtn.addEventListener('click', startEntireGame);
@@ -124,6 +128,8 @@ function startEntireGame() {
     var elem = document.documentElement;
     if (elem.requestFullscreen) { elem.requestFullscreen().catch(()=>{}); }
 
+    initRandomSession();
+
     currentIndex = 0;
     studentData = {};
     isGameActive = true;
@@ -149,7 +155,6 @@ function loadStudentTurn() {
     ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     drawGuideShape(currentStudent.shape, gCtx, guideCanvas.width, guideCanvas.height);
     
-    // Reset Riwayat Canvas untuk Siswa Baru
     historySteps = [];
     historyStepIndex = -1;
     clickStrokeCount = 0;
@@ -167,46 +172,48 @@ function drawGuideShape(shape, targetCtx, w, h) {
     targetCtx.lineWidth = 3;
     targetCtx.setLineDash([6, 6]);
 
+    // Koordinat disesuaikan secara proporsional dengan ukuran kanvas baru (720x440)
     targetCtx.beginPath();
     if (shape === 'rumah') {
-        targetCtx.strokeRect(180, 150, 290, 160);
-        targetCtx.moveTo(150, 150); targetCtx.lineTo(325, 60); targetCtx.lineTo(500, 150);
-        targetCtx.strokeRect(290, 220, 70, 90);
-        targetCtx.strokeRect(210, 180, 50, 50); targetCtx.strokeRect(390, 180, 50, 50);
+        targetCtx.strokeRect(210, 180, 300, 180);
+        targetCtx.moveTo(170, 180); targetCtx.lineTo(360, 70); targetCtx.lineTo(550, 180);
+        targetCtx.strokeRect(325, 260, 70, 100);
+        targetCtx.strokeRect(240, 210, 55, 55); targetCtx.strokeRect(425, 210, 55, 55);
     } else if (shape === 'mobil') {
-        targetCtx.strokeRect(150, 180, 350, 90);
-        targetCtx.moveTo(220, 180); targetCtx.lineTo(270, 110); targetCtx.lineTo(380, 110); targetCtx.lineTo(430, 180);
-        targetCtx.arc(230, 270, 30, 0, Math.PI * 2);
-        targetCtx.moveTo(450, 270); targetCtx.arc(420, 270, 30, 0, Math.PI * 2);
+        targetCtx.strokeRect(170, 210, 380, 100);
+        targetCtx.moveTo(250, 210); targetCtx.lineTo(300, 120); targetCtx.lineTo(420, 120); targetCtx.lineTo(470, 210);
+        targetCtx.arc(260, 310, 32, 0, Math.PI * 2);
+        targetCtx.moveTo(490, 310); targetCtx.arc(460, 310, 32, 0, Math.PI * 2);
     } else if (shape === 'pohon') {
-        targetCtx.strokeRect(300, 200, 50, 120);
-        targetCtx.arc(325, 140, 90, 0, Math.PI * 2);
+        targetCtx.strokeRect(335, 230, 50, 140);
+        targetCtx.arc(360, 160, 100, 0, Math.PI * 2);
     } else if (shape === 'bintang') {
-        let cx = 325, cy = 175, outer = 110, inner = 45;
+        let cx = 360, cy = 200, outer = 120, inner = 50;
         for (let i = 0; i < 5; i++) {
             targetCtx.lineTo(cx + Math.cos((18 + i * 72) * Math.PI / 180) * outer, cy - Math.sin((18 + i * 72) * Math.PI / 180) * outer);
             targetCtx.lineTo(cx + Math.cos((54 + i * 72) * Math.PI / 180) * inner, cy - Math.sin((54 + i * 72) * Math.PI / 180) * inner);
         }
         targetCtx.closePath();
     } else if (shape === 'kapal') {
-        targetCtx.moveTo(150, 220); targetCtx.lineTo(500, 220); targetCtx.lineTo(430, 290); targetCtx.lineTo(220, 290); targetCtx.closePath();
-        targetCtx.moveTo(325, 220); targetCtx.lineTo(325, 70); targetCtx.lineTo(420, 150); targetCtx.lineTo(325, 150);
-    } else if (shape === 'bunga') {
-        targetCtx.strokeRect(320, 220, 10, 100);
-        targetCtx.arc(325, 150, 35, 0, Math.PI * 2);
-        for(let a=0; a<360; a+=45) {
-            let rx = 325 + Math.cos(a*Math.PI/180)*60;
-            let ry = 150 + Math.sin(a*Math.PI/180)*60;
-            targetCtx.moveTo(rx, ry); targetCtx.arc(rx, ry, 20, 0, Math.PI*2);
-        }
+        targetCtx.moveTo(170, 260); targetCtx.lineTo(550, 260); targetCtx.lineTo(470, 330); targetCtx.lineTo(250, 330); targetCtx.closePath();
+        targetCtx.moveTo(360, 260); targetCtx.lineTo(360, 80); targetCtx.lineTo(460, 160); targetCtx.lineTo(360, 160);
+    } else if (shape === 'bola') {
+        targetCtx.arc(360, 200, 105, 0, Math.PI * 2);
+        targetCtx.moveTo(360, 155); targetCtx.lineTo(395, 180); targetCtx.lineTo(380, 225);
+        targetCtx.lineTo(340, 225); targetCtx.lineTo(325, 180); targetCtx.closePath();
+        targetCtx.moveTo(360, 95); targetCtx.lineTo(360, 155);
+        targetCtx.moveTo(395, 180); targetCtx.lineTo(465, 165);
+        targetCtx.moveTo(380, 225); targetCtx.lineTo(445, 280);
+        targetCtx.moveTo(340, 225); targetCtx.lineTo(275, 280);
+        targetCtx.moveTo(325, 180); targetCtx.lineTo(255, 165);
     } else if (shape === 'cangkir') {
-        targetCtx.strokeRect(220, 130, 200, 150);
-        targetCtx.arc(420, 205, 45, -Math.PI/2, Math.PI/2);
-        targetCtx.strokeRect(190, 280, 260, 15);
+        targetCtx.strokeRect(240, 150, 220, 170);
+        targetCtx.arc(460, 235, 50, -Math.PI/2, Math.PI/2);
+        targetCtx.strokeRect(205, 320, 290, 16);
     } else if (shape === 'ikan') {
-        targetCtx.ellipse(325, 175, 130, 75, 0, 0, Math.PI * 2);
-        targetCtx.moveTo(455, 175); targetCtx.lineTo(530, 110); targetCtx.lineTo(530, 240); targetCtx.closePath();
-        targetCtx.arc(240, 160, 8, 0, Math.PI*2);
+        targetCtx.ellipse(360, 200, 140, 80, 0, 0, Math.PI * 2);
+        targetCtx.moveTo(500, 200); targetCtx.lineTo(580, 130); targetCtx.lineTo(580, 270); targetCtx.closePath();
+        targetCtx.arc(260, 185, 9, 0, Math.PI*2);
     }
     targetCtx.stroke();
     targetCtx.setLineDash([]);
@@ -228,7 +235,6 @@ function saveAndNextStudent() {
     clearInterval(countdown);
     const student = studentsList[currentIndex];
     
-    // Evaluasi Penilaian Bonus (Penutupan Kunci & Efisiensi Goresan)
     const scoreResult = calculateBonusEvaluationScore(drawingCanvas, student.shape, clickStrokeCount);
     
     studentData[student.name] = {
@@ -243,7 +249,6 @@ function saveAndNextStudent() {
     loadStudentTurn();
 }
 
-// SISTEM PENILAIAN BONUS: PENUTUPAN GARIS KUNCI & EFISIENSI KLIK
 function calculateBonusEvaluationScore(canvasElem, shape, totalStrokes) {
     const w = canvasElem.width;
     const h = canvasElem.height;
@@ -253,7 +258,7 @@ function calculateBonusEvaluationScore(canvasElem, shape, totalStrokes) {
     const kCtx = keyCanvas.getContext('2d');
     
     kCtx.strokeStyle = "#000000";
-    kCtx.lineWidth = 14; // Toleransi lebar garis penutupan
+    kCtx.lineWidth = 14;
     drawGuideShape(shape, kCtx, w, h);
 
     const keyData = kCtx.getImageData(0, 0, w, h).data;
@@ -283,20 +288,14 @@ function calculateBonusEvaluationScore(canvasElem, shape, totalStrokes) {
         return { totalScore: 0, keyCoverage: 0, efficiencyScore: 0, feedback: "❌ Kanvas kosong atau coretan terlalu minim." };
     }
 
-    // 1. Rasio Penutupan Garis Kunci (Semakin banyak bagian garis kunci tertutup, semakin tinggi nilainya)
-    const keyCoverageRatio = matchedPixelCount / (keyPixelCount || 1); // 0.0 - 1.0
-
-    // 2. Bonus Efisiensi Goresan (Sedikit klik/tahan mousedown yang terarah = nilai efisiensi tinggi)
-    // Asumsi ideal untuk menggambar objek standar adalah 3 hingga 15 kali goresan (klik-tahan).
+    const keyCoverageRatio = matchedPixelCount / (keyPixelCount || 1);
     let efficiencyRatio = 1.0;
     if (totalStrokes > 20) {
         efficiencyRatio = Math.max(0.4, 1.0 - ((totalStrokes - 20) * 0.02));
     }
 
-    // Penalti jika terlalu banyak melenceng keluar garis kunci
     const precisionPenalty = Math.max(0.5, 1.0 - (offTargetPixelCount / (userPixelCount + 1)));
 
-    // Kalkulasi Skor Akhir Bonus (Skala 0 - 100)
     let baseScore = (keyCoverageRatio * 75) + (efficiencyRatio * 25);
     let finalScore = Math.round(baseScore * precisionPenalty);
 
@@ -323,7 +322,6 @@ function calculateBonusEvaluationScore(canvasElem, shape, totalStrokes) {
     };
 }
 
-// FUNGSI RIWAYAT KANVAS (UNDO & REDO)
 function saveCanvasState() {
     historyStepIndex++;
     if (historyStepIndex < historySteps.length) {
@@ -402,8 +400,6 @@ function displayStudentResult(index) {
         return;
     }
 
-    drawGuideShape(student.shape, resCtx, resCanvas.width, resCanvas.height);
-
     const img = new Image();
     img.onload = () => {
         resCtx.drawImage(img, 0, 0, resCanvas.width, resCanvas.height);
@@ -421,15 +417,14 @@ function displayStudentResult(index) {
     else scoreCircle.style.borderColor = "#ef4444";
 }
 
-// EVENT MENGGAMBAR & MENGHITUNG KETUKAN KLIK KIRI
 drawingCanvas.addEventListener('mousedown', startPosition);
 drawingCanvas.addEventListener('mouseup', finishedPosition);
 drawingCanvas.addEventListener('mousemove', draw);
 
 function startPosition(e) {
-    if (e.button !== 0) return; // Hanya klik kiri
+    if (e.button !== 0) return;
     painting = true;
-    clickStrokeCount++; // Hitung 1x aksi menekan klik kiri saat membuat garis
+    clickStrokeCount++;
     draw(e);
 }
 
@@ -437,7 +432,7 @@ function finishedPosition() {
     if (!painting) return;
     painting = false;
     ctx.beginPath();
-    saveCanvasState(); // Simpan state riwayat setiap kali selesai 1x garis klik kiri
+    saveCanvasState();
 }
 
 function draw(e) {
@@ -469,7 +464,6 @@ clearBtn.addEventListener('click', () => {
     }
 });
 
-// ANTI CHEAT DETEKTOR
 document.addEventListener('fullscreenchange', () => {
     if (isGameActive && !document.fullscreenElement) {
         warningOverlay.style.display = 'flex';
