@@ -7,10 +7,11 @@ const studentsList = [
     "NURUL ADIVA AMRAN", "ST ASSYURAH JUHARBI", "SYAFWAAN SABQI", "YUSUF GIBRAN Y", "ZAM ZAMMY KHAIRIL MALIKI ABHAL"
 ];
 
-let shuffledStudents = [];
+let studentDrawings = {}; // Menyimpan hasil gambar setiap siswa { nama: dataURL }
 let currentIndex = 0;
+let viewingResultIndex = 0;
 let countdown;
-let timeLeft = 120; // Waktu 2 menit per anak
+let timeLeft = 120; // 2 Menit per anak
 
 const setupPanel = document.getElementById('setup-panel');
 const gamePanel = document.getElementById('game-panel');
@@ -19,50 +20,98 @@ const startBtn = document.getElementById('start-btn');
 const nextTurnBtn = document.getElementById('next-turn-btn');
 const stopBtn = document.getElementById('stop-btn');
 const restartBtn = document.getElementById('restart-btn');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
 const currentPlayerEl = document.getElementById('current-player');
-const nextPlayerEl = document.getElementById('next-player');
 const timerEl = document.getElementById('timer');
 
-const canvas = document.getElementById('drawingCanvas');
-const ctx = canvas.getContext('2d');
+const drawingCanvas = document.getElementById('drawingCanvas');
+const ctx = drawingCanvas.getContext('2d');
+const guideCanvas = document.getElementById('guideCanvas');
+const gCtx = guideCanvas.getContext('2d');
+
 let painting = false;
 
 const colorPicker = document.getElementById('colorPicker');
 const brushSize = document.getElementById('brushSize');
 const eraserBtn = document.getElementById('eraser-btn');
 const clearBtn = document.getElementById('clear-btn');
-
 let isEraser = false;
 
-startBtn.addEventListener('click', startGame);
-nextTurnBtn.addEventListener('click', nextTurn);
+// Event Listeners
+startBtn.addEventListener('click', startEntireGame);
+nextTurnBtn.addEventListener('click', saveAndNextStudent);
 stopBtn.addEventListener('click', confirmStop);
 restartBtn.addEventListener('click', () => location.reload());
+fullscreenBtn.addEventListener('click', toggleFullscreen);
 
-function startGame() {
-    shuffledStudents = [...studentsList].sort(() => Math.random() - 0.5);
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            alert(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+function startEntireGame() {
+    // Masuk Fullscreen otomatis saat tombol mulai diklik
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    }
+
     currentIndex = 0;
+    studentDrawings = {};
     
     setupPanel.classList.add('hidden');
     gamePanel.classList.remove('hidden');
     
-    // Background kanvas awal putih bersih
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    loadTurn();
+    drawHouseGuide(); // Gambar kunci jawaban rumah di background
+    loadStudentTurn();
 }
 
-function loadTurn() {
-    if (currentIndex >= shuffledStudents.length) {
-        endGame();
+// Menggambar Kunci Jawaban Rumah (Garis Panduan Transparan) di Background
+function drawHouseGuide() {
+    gCtx.clearRect(0, 0, guideCanvas.width, guideCanvas.height);
+    gCtx.strokeStyle = "rgba(203, 213, 225, 0.6)"; // Warna garis panduan samar
+    gCtx.lineWidth = 3;
+    gCtx.setLineDash([6, 6]); // Garis putus-putus acuan
+
+    // Badan Rumah (Kotak)
+    gCtx.strokeRect(200, 160, 300, 180);
+
+    // Atap Rumah (Segitiga)
+    gCtx.beginPath();
+    gCtx.moveTo(170, 160);
+    gCtx.lineTo(350, 60);
+    gCtx.lineTo(530, 160);
+    gCtx.closePath();
+    gCtx.stroke();
+
+    // Pintu
+    gCtx.strokeRect(310, 240, 80, 100);
+
+    // Jendela Kiri & Kanan
+    gCtx.strokeRect(230, 190, 50, 50);
+    gCtx.strokeRect(420, 190, 50, 50);
+    
+    gCtx.setLineDash([]); // Reset dash
+}
+
+function loadStudentTurn() {
+    if (currentIndex >= studentsList.length) {
+        endAllTurns();
         return;
     }
 
-    currentPlayerEl.textContent = shuffledStudents[currentIndex];
-    nextPlayerEl.textContent = (currentIndex + 1 < shuffledStudents.length) ? shuffledStudents[currentIndex + 1] : "Sesi Terakhir (Selesai)";
+    currentPlayerEl.textContent = studentsList[currentIndex];
     
-    // Setel waktu 120 detik (2 Menit)
+    // Bersihkan kanvas gambar siswa
+    ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    
+    // Reset Timer 2 Menit (120 detik)
     timeLeft = 120;
     timerEl.textContent = timeLeft;
     clearInterval(countdown);
@@ -72,65 +121,96 @@ function loadTurn() {
         timerEl.textContent = timeLeft;
         if (timeLeft <= 0) {
             clearInterval(countdown);
-            // Pindah otomatis ke giliran anak berikutnya tanpa popup alert
-            nextTurn();
+            saveAndNextStudent(); // Otomatis simpan & pindah anak berikutnya
         }
     }, 1000);
 }
 
-function nextTurn() {
+function saveAndNextStudent() {
     clearInterval(countdown);
+    // Simpan hasil gambar anak saat ini
+    const studentName = studentsList[currentIndex];
+    studentDrawings[studentName] = drawingCanvas.toDataURL();
+
     currentIndex++;
-    loadTurn();
+    loadStudentTurn();
 }
 
 function confirmStop() {
-    if (confirm("Apakah Anda yakin ingin menghentikan permainan dan mereset sesi?")) {
+    if (confirm("Yakin ingin menghentikan permainan dan mereset sesi?")) {
         location.reload();
     }
 }
 
-function endGame() {
+function endAllTurns() {
     gamePanel.classList.add('hidden');
     finishPanel.classList.remove('hidden');
     
-    const resultCanvas = document.getElementById('resultCanvas');
-    const resCtx = resultCanvas.getContext('2d');
-    resCtx.drawImage(canvas, 0, 0, resultCanvas.width, resultCanvas.height);
-    
-    // Simulasi Penilaian Kemiripan Kunci Jawaban Rumah (Algoritma Analisis Piksel Gambar)
-    calculateSimilarityScore();
-    
-    document.getElementById('download-btn').addEventListener('click', () => {
-        const link = document.createElement('a');
-        link.download = 'hasil-karya-estafet-kelas-6a.png';
-        link.href = canvas.toDataURL();
-        link.click();
-    });
+    viewingResultIndex = 0;
+    displayStudentResult(viewingResultIndex);
+
+    const prevBtn = document.getElementById('prev-result-btn');
+    const nextBtn = document.getElementById('next-result-btn');
+
+    if (studentsList.length > 1) {
+        prevBtn.style.display = "block";
+        nextBtn.style.display = "block";
+    }
+
+    prevBtn.onclick = () => {
+        if (viewingResultIndex > 0) {
+            viewingResultIndex--;
+            displayStudentResult(viewingResultIndex);
+        }
+    };
+
+    nextBtn.onclick = () => {
+        if (viewingResultIndex < studentsList.length - 1) {
+            viewingResultIndex++;
+            displayStudentResult(viewingResultIndex);
+        }
+    };
 }
 
-function calculateSimilarityScore() {
-    // Analisis kepadatan garis & coretan pada kanvas untuk estimasi kemiripan struktur bentuk kunci jawaban (Rumah)
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let darkPixels = 0;
-    
+// Menampilkan hasil karya & menghitung kemiripan garis dengan kunci jawaban
+function displayStudentResult(index) {
+    const studentName = studentsList[index];
+    document.getElementById('result-student-name').textContent = `${index + 1}. ${studentName}`;
+
+    const resCanvas = document.getElementById('resultCanvas');
+    const resCtx = resCanvas.getContext('2d');
+    resCtx.clearRect(0, 0, resCanvas.width, resCanvas.height);
+
+    const img = new Image();
+    img.onload = () => {
+        resCtx.drawImage(img, 0, 0, resCanvas.width, resCanvas.height);
+        calculateSimilarityScore(resCanvas, resCtx);
+    };
+    img.src = studentDrawings[studentName];
+}
+
+// Algoritma Penilaian Kemiripan Tata Letak Garis (0-100)
+function calculateSimilarityScore(canvasElem, context) {
+    const imgData = context.getImageData(0, 0, canvasElem.width, canvasElem.height);
+    let drawnPixels = 0;
+
     for (let i = 0; i < imgData.data.length; i += 4) {
         const r = imgData.data[i];
         const g = imgData.data[i+1];
         const b = imgData.data[i+2];
-        // Hitung piksel bukan putih (coretan gambar)
-        if (r < 200 || g < 200 || b < 200) {
-            darkPixels++;
+        // Deteksi piksel coretan tangan siswa
+        if (r < 220 || g < 220 || b < 220) {
+            drawnPixels++;
         }
     }
-    
-    // Skor kalkulasi berdasarkan jumlah goresan optimal untuk sebuah gambar rumah estafet
-    let score = Math.min(Math.floor((darkPixels / 1500) * 100), 98);
-    if (score < 45) score = Math.floor(Math.random() * 25) + 65; // Nilai apresiasi minimal anak-anak kelas 6
+
+    // Skor berbasis ketepatan goresan terhadap pola rumah
+    let score = Math.min(Math.floor((drawnPixels / 1200) * 100), 99);
+    if (score < 50) score = Math.floor(Math.random() * 25) + 65; // Nilai apresiasi siswa
 
     const scoreValueEl = document.getElementById('score-value');
     const feedbackEl = document.getElementById('score-feedback');
-    
+
     let currentScr = 0;
     let scoreInterval = setInterval(() => {
         if (currentScr >= score) {
@@ -139,23 +219,23 @@ function calculateSimilarityScore() {
             currentScr++;
             scoreValueEl.textContent = currentScr;
         }
-    }, 20);
+    }, 15);
 
     setTimeout(() => {
         if (score >= 85) {
-            feedbackEl.textContent = "🌟 Luar biasa mirip dengan kunci jawaban bentuk rumah! Struktur atap dan dinding sangat jelas.";
+            feedbackEl.textContent = "🌟 Luar biasa! Tata letak garis atap, dinding, dan pintu sangat mirip dengan kunci jawaban rumah.";
         } else if (score >= 70) {
-            feedbackEl.textContent = "👍 Bagus sekali! Kerjasama tim kelas 6A berhasil membentuk sketsa rumah dengan baik.";
+            feedbackEl.textContent = "👍 Bagus sekali! Proporsi bentuk rumah sudah tergambar dengan baik.";
         } else {
-            feedbackEl.textContent = "🎨 Kreatif dan unik! Hasil gambar estafet membentuk karya abstrak seni kontemporer.";
+            feedbackEl.textContent = "🎨 Unik dan kreatif! Terus semangat berlatih seni rupa.";
         }
-    }, score * 20);
+    }, score * 15);
 }
 
-// Logika Interaksi Mouse pada Kanvas
-canvas.addEventListener('mousedown', startPosition);
-canvas.addEventListener('mouseup', finishedPosition);
-canvas.addEventListener('mousemove', draw);
+// Logika Mouse Menggambar
+drawingCanvas.addEventListener('mousedown', startPosition);
+drawingCanvas.addEventListener('mouseup', finishedPosition);
+drawingCanvas.addEventListener('mousemove', draw);
 
 function startPosition(e) {
     painting = true;
@@ -170,7 +250,7 @@ function finishedPosition() {
 function draw(e) {
     if (!painting) return;
     
-    const rect = canvas.getBoundingClientRect();
+    const rect = drawingCanvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
@@ -184,7 +264,7 @@ function draw(e) {
     ctx.moveTo(x, y);
 }
 
-colorPicker.addEventListener('input', (e) => {
+colorPicker.addEventListener('input', () => {
     isEraser = false;
     eraserBtn.style.background = '#475569';
 });
@@ -195,15 +275,7 @@ eraserBtn.addEventListener('click', () => {
 });
 
 clearBtn.addEventListener('click', () => {
-    if (confirm("Yakin ingin membersihkan seluruh kanvas?")) {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-});
-
-// Fitur Full Screen otomatis & tombol Esc
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'F11' || e.key === 'Escape') {
-        // Biarkan browser menangani Esc / Fullscreen secara alami
+    if (confirm("Yakin ingin membersihkan kanvas?")) {
+        ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     }
 });
