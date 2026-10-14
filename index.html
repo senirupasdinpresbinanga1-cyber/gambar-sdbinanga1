@@ -40,18 +40,18 @@
             <!-- HEADER -->
             <header class="app-header">
                 <h1>🎨 Seni Rupa <span class="badge">Kelas 6A</span></h1>
-                <p>Uji Ketepatan Garis & Presisi Menggambar (Sistem Bonus Penutupan Kunci & Efisiensi Goresan)</p>
+                <p>Uji Ketepatan Garis & Presisi Menggambar (Sistem Acak Sesi & Penilaian Ketat)</p>
             </header>
 
             <!-- PANEL SETUP -->
             <div id="setup-panel" class="glass-card">
                 <div class="setup-content">
-                    <h3>📜 Peraturan & Panduan Penilaian Bonus</h3>
-                    <p>Siswa menggambar sesuai pola kunci. Sistem penilaian diperketat dengan aturan bonus:</p>
+                    <h3>📜 Peraturan & Panduan Sesi</h3>
+                    <p>Siswa menggambar sesuai pola kunci yang diacak otomatis setiap sesi:</p>
                     <ul class="rule-list">
-                        <li>🎯 <strong>Penutupan Garis Kunci:</strong> Semakin rapi menutupi garis putus-putus merah hingga tidak terlihat, nilai semakin tinggi.</li>
-                        <li>⚡ <strong>Efisiensi Goresan:</strong> Goresan bersih & efisien (tidak terlalu banyak coretan/klik berlebihan) mendapakatkan nilai maksimal.</li>
-                        <li>↩️ <strong>Fitur Undo & Redo:</strong> Gunakan tombol <i class="fas fa-undo"></i> Undo (atau Ctrl+Z) dan <i class="fas fa-redo"></i> Redo (Ctrl+Y) untuk mengoreksi goresan terakhir.</li>
+                        <li>🔀 <strong>Pengacakan Otomatis:</strong> Urutan siswa dan jenis objek gambar diacak setiap kali game dimulai/di-reset.</li>
+                        <li>🎯 <strong>Penilaian Bonus:</strong> Berdasarkan penutupan garis kunci & efisiensi goresan klik kiri.</li>
+                        <li>↩️ <strong>Undo & Redo:</strong> Gunakan tombol <i class="fas fa-undo"></i> Undo (Ctrl+Z) / <i class="fas fa-redo"></i> Redo (Ctrl+Y) untuk mengoreksi goresan.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan Kelas (Fullscreen)</button>
                 </div>
@@ -73,13 +73,13 @@
                     </div>
                 </div>
 
-                <!-- Area Kanvas -->
+                <!-- Area Kanvas yang Diperlebar ke Bawah -->
                 <div class="canvas-wrapper">
-                    <canvas id="guideCanvas" width="650" height="350"></canvas>
-                    <canvas id="drawingCanvas" width="650" height="350"></canvas>
+                    <canvas id="guideCanvas" width="720" height="440"></canvas>
+                    <canvas id="drawingCanvas" width="720" height="440"></canvas>
                 </div>
 
-                <!-- Kontrol Alat Gambar -->
+                <!-- Kontrol Alat Gambar di Bawah Kanvas -->
                 <div class="tool-controls">
                     <div class="tool-group">
                         <label>Warna: <input type="color" id="colorPicker" value="#0f172a"></label>
@@ -99,12 +99,12 @@
 
             <!-- PANEL SELESAI & HASIL AKURASI -->
             <div id="finish-panel" class="glass-card hidden">
-                <h2>🏆 Laporan Analisis Akurasi & Bonus Presisi</h2>
-                <p id="finish-subtitle" style="color: #94a3b8; font-size: 13px;">Klik nama siswa di daftar sebelah kiri untuk melihat detail jawaban.</p>
+                <h2>🏆 Laporan Analisis Hasil Karya Siswa</h2>
+                <p id="finish-subtitle" style="color: #94a3b8; font-size: 13px;">Hasil murni karya siswa tanpa garis panduan kunci jawaban.</p>
                 
                 <div class="result-container">
                     <div class="canvas-result-box">
-                        <canvas id="resultCanvas" width="480" height="280"></canvas>
+                        <canvas id="resultCanvas" width="500" height="320"></canvas>
                         <h3 id="result-student-name" class="student-result-title">-</h3>
                     </div>
                     <div class="score-box">
