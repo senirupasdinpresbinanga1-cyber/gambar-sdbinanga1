@@ -40,22 +40,18 @@
             <!-- HEADER -->
             <header class="app-header">
                 <h1>🎨 Seni Rupa <span class="badge">Kelas 6A</span></h1>
-                <p>Uji Ketepatan Garis & Presisi Menggambar (Sistem Penilaian Ketat IoU Matrix)</p>
+                <p>Uji Ketepatan Garis & Presisi Menggambar (Sistem Bonus Penutupan Kunci & Efisiensi Goresan)</p>
             </header>
 
             <!-- PANEL SETUP -->
             <div id="setup-panel" class="glass-card">
                 <div class="setup-content">
-                    <h3>📜 Peraturan & Panduan Penilaian</h3>
-                    <p>
-                        Siswa akan menggambar pola yang telah ditentukan secara bergiliran. Sistem penilaian menggunakan 
-                        <strong>Algoritma IoU (Intersection over Union) Ketat</strong>:
-                    </p>
+                    <h3>📜 Peraturan & Panduan Penilaian Bonus</h3>
+                    <p>Siswa menggambar sesuai pola kunci. Sistem penilaian diperketat dengan aturan bonus:</p>
                     <ul class="rule-list">
-                        <li>❌ <strong>Kanvas Kosong / Garis Minim:</strong> Nilai 0 - 15</li>
-                        <li>⚠️ <strong>Melenceng / Garis Miring / Tidak Pas:</strong> Nilai berkisar 40 - 70 (seperti contoh nilai 60-an)</li>
-                        <li>✅ <strong>Sangat Presisi Menutupi Garis Kunci:</strong> Nilai 85 - 100</li>
-                        <li>🎨 Setiap siswa mendapatkan objek gambar berbeda (Rumah, Mobil, Pohon, Kapal, Bunga, dll).</li>
+                        <li>🎯 <strong>Penutupan Garis Kunci:</strong> Semakin rapi menutupi garis putus-putus merah hingga tidak terlihat, nilai semakin tinggi.</li>
+                        <li>⚡ <strong>Efisiensi Goresan:</strong> Goresan bersih & efisien (tidak terlalu banyak coretan/klik berlebihan) mendapakatkan nilai maksimal.</li>
+                        <li>↩️ <strong>Fitur Undo & Redo:</strong> Gunakan tombol <i class="fas fa-undo"></i> Undo (atau Ctrl+Z) dan <i class="fas fa-redo"></i> Redo (Ctrl+Y) untuk mengoreksi goresan terakhir.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan Kelas (Fullscreen)</button>
                 </div>
@@ -87,19 +83,23 @@
                 <div class="tool-controls">
                     <div class="tool-group">
                         <label>Warna: <input type="color" id="colorPicker" value="#0f172a"></label>
-                        <label>Ketebalan: <input type="range" id="brushSize" min="3" max="15" value="6"></label>
+                        <label>Tebal: <input type="range" id="brushSize" min="3" max="15" value="6"></label>
+                    </div>
+                    <div class="tool-group-history">
+                        <button id="undo-btn" class="btn btn-secondary btn-sm" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i> Undo</button>
+                        <button id="redo-btn" class="btn btn-secondary btn-sm" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i> Redo</button>
                     </div>
                     <div class="action-group">
                         <button id="eraser-btn" class="btn btn-secondary"><i class="fas fa-eraser"></i> Penghapus</button>
                         <button id="clear-btn" class="btn btn-danger"><i class="fas fa-trash"></i> Bersihkan</button>
-                        <button id="next-turn-btn" class="btn btn-success"><i class="fas fa-arrow-right"></i> Simpan & Lanjut</button>
+                        <button id="next-turn-btn" class="btn btn-success"><i class="fas fa-arrow-right"></i> Selesai & Lanjut</button>
                     </div>
                 </div>
             </div>
 
             <!-- PANEL SELESAI & HASIL AKURASI -->
             <div id="finish-panel" class="glass-card hidden">
-                <h2>🏆 Laporan Analisis Akurasi Ketepatan Garis</h2>
+                <h2>🏆 Laporan Analisis Akurasi & Bonus Presisi</h2>
                 <p id="finish-subtitle" style="color: #94a3b8; font-size: 13px;">Klik nama siswa di daftar sebelah kiri untuk melihat detail jawaban.</p>
                 
                 <div class="result-container">
@@ -108,15 +108,15 @@
                         <h3 id="result-student-name" class="student-result-title">-</h3>
                     </div>
                     <div class="score-box">
-                        <h4>🎯 Skor Presisi & Akurasi</h4>
+                        <h4>🎯 Skor Bonus & Akurasi</h4>
                         <div class="score-circle" id="score-circle">
                             <span id="score-value">0</span><small>/100</small>
                         </div>
                         <p id="score-feedback" class="feedback-text">Menganalisis matriks piksel...</p>
                         
                         <div class="score-breakdown">
-                            <div class="breakdown-item">Cakupan Kunci: <span id="key-coverage">0%</span></div>
-                            <div class="breakdown-item">Garis Melenceng: <span id="off-target">0%</span></div>
+                            <div class="breakdown-item">Penutupan Kunci: <span id="key-coverage">0%</span></div>
+                            <div class="breakdown-item">Efisiensi Goresan: <span id="stroke-efficiency">0%</span></div>
                         </div>
 
                         <div class="result-nav-buttons">
