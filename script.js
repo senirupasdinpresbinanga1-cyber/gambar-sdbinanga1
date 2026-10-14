@@ -34,6 +34,11 @@ let countdown;
 let timeLeft = 120;
 let isGameActive = false;
 
+// VARIABEL RIWAYAT UNDO / REDO
+let historySteps = [];
+let historyStepIndex = -1;
+let clickStrokeCount = 0; // Menghitung total klik-tahan (mousedown) untuk efisiensi goresan
+
 // ELEMENT REF
 const setupPanel = document.getElementById('setup-panel');
 const gamePanel = document.getElementById('game-panel');
@@ -58,6 +63,8 @@ const colorPicker = document.getElementById('colorPicker');
 const brushSize = document.getElementById('brushSize');
 const eraserBtn = document.getElementById('eraser-btn');
 const clearBtn = document.getElementById('clear-btn');
+const undoBtn = document.getElementById('undo-btn');
+const redoBtn = document.getElementById('redo-btn');
 let isEraser = false;
 
 // INIT
@@ -67,6 +74,21 @@ startBtn.addEventListener('click', startEntireGame);
 nextTurnBtn.addEventListener('click', saveAndNextStudent);
 stopBtn.addEventListener('click', confirmStop);
 restartBtn.addEventListener('click', () => location.reload());
+
+undoBtn.addEventListener('click', undoCanvas);
+redoBtn.addEventListener('click', redoCanvas);
+
+// SHORTCUT KEYBOARD CTRL+Z & CTRL+Y
+document.addEventListener('keydown', (e) => {
+    if (!isGameActive) return;
+    if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undoCanvas();
+    } else if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redoCanvas();
+    }
+});
 
 function renderSidebarList() {
     studentListEl.innerHTML = '';
@@ -127,25 +149,30 @@ function loadStudentTurn() {
     ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     drawGuideShape(currentStudent.shape, gCtx, guideCanvas.width, guideCanvas.height);
     
+    // Reset Riwayat Canvas untuk Siswa Baru
+    historySteps = [];
+    historyStepIndex = -1;
+    clickStrokeCount = 0;
+    saveCanvasState();
+
     timeLeft = 120;
     timerEl.textContent = timeLeft;
     startTimer();
     renderSidebarList();
 }
 
-// FUNGSI MENGGAMBAR PANDUAN KUNCI JAWABAN (DASHED LINE)
 function drawGuideShape(shape, targetCtx, w, h) {
     targetCtx.clearRect(0, 0, w, h);
-    targetCtx.strokeStyle = "rgba(225, 29, 72, 0.7)"; // Warna Merah Garis Panduan
+    targetCtx.strokeStyle = "rgba(225, 29, 72, 0.7)"; 
     targetCtx.lineWidth = 3;
     targetCtx.setLineDash([6, 6]);
 
     targetCtx.beginPath();
     if (shape === 'rumah') {
-        targetCtx.strokeRect(180, 150, 290, 160); // Badan
-        targetCtx.moveTo(150, 150); targetCtx.lineTo(325, 60); targetCtx.lineTo(500, 150); // Atap
-        targetCtx.strokeRect(290, 220, 70, 90); // Pintu
-        targetCtx.strokeRect(210, 180, 50, 50); targetCtx.strokeRect(390, 180, 50, 50); // Jendela
+        targetCtx.strokeRect(180, 150, 290, 160);
+        targetCtx.moveTo(150, 150); targetCtx.lineTo(325, 60); targetCtx.lineTo(500, 150);
+        targetCtx.strokeRect(290, 220, 70, 90);
+        targetCtx.strokeRect(210, 180, 50, 50); targetCtx.strokeRect(390, 180, 50, 50);
     } else if (shape === 'mobil') {
         targetCtx.strokeRect(150, 180, 350, 90);
         targetCtx.moveTo(220, 180); targetCtx.lineTo(270, 110); targetCtx.lineTo(380, 110); targetCtx.lineTo(430, 180);
@@ -201,14 +228,14 @@ function saveAndNextStudent() {
     clearInterval(countdown);
     const student = studentsList[currentIndex];
     
-    // Evaluasi Penilaian Ketat IoU
-    const scoreResult = calculateStrictIoUScore(drawingCanvas, student.shape);
+    // Evaluasi Penilaian Bonus (Penutupan Kunci & Efisiensi Goresan)
+    const scoreResult = calculateBonusEvaluationScore(drawingCanvas, student.shape, clickStrokeCount);
     
     studentData[student.name] = {
         dataUrl: drawingCanvas.toDataURL(),
         score: scoreResult.totalScore,
         coverage: scoreResult.keyCoverage,
-        offTarget: scoreResult.offTargetPenalty,
+        efficiency: scoreResult.efficiencyScore,
         feedback: scoreResult.feedback
     };
 
@@ -216,19 +243,17 @@ function saveAndNextStudent() {
     loadStudentTurn();
 }
 
-// ALGORITMA PENILAIAN SANGAT KETAT (IoU STRICT PIXEL MATCHING)
-function calculateStrictIoUScore(canvasElem, shape) {
+// SISTEM PENILAIAN BONUS: PENUTUPAN GARIS KUNCI & EFISIENSI KLIK
+function calculateBonusEvaluationScore(canvasElem, shape, totalStrokes) {
     const w = canvasElem.width;
     const h = canvasElem.height;
 
-    // 1. Kanvas Virtual Kunci Jawaban
     const keyCanvas = document.createElement('canvas');
     keyCanvas.width = w; keyCanvas.height = h;
     const kCtx = keyCanvas.getContext('2d');
     
-    // Draw Key Solid Line (LineWidth 12px untuk toleransi wajar)
     kCtx.strokeStyle = "#000000";
-    kCtx.lineWidth = 12;
+    kCtx.lineWidth = 14; // Toleransi lebar garis penutupan
     drawGuideShape(shape, kCtx, w, h);
 
     const keyData = kCtx.getImageData(0, 0, w, h).data;
@@ -241,7 +266,7 @@ function calculateStrictIoUScore(canvasElem, shape) {
     let offTargetPixelCount = 0;
 
     for (let i = 0; i < keyData.length; i += 4) {
-        const isKey = keyData[i + 3] > 50; // Alpha > 50
+        const isKey = keyData[i + 3] > 50;
         const isUser = userData[i + 3] > 50;
 
         if (isKey) keyPixelCount++;
@@ -254,58 +279,81 @@ function calculateStrictIoUScore(canvasElem, shape) {
         }
     }
 
-    // PENILAIAN NOL / SANGAT LOW UNTUK KANVAS KOSONG ATAU SANGAT MINIM
-    if (userPixelCount < 150) {
-        return {
-            totalScore: 0,
-            keyCoverage: 0,
-            offTargetPenalty: 0,
-            feedback: "❌ Kanvas kosong atau hanya terdapat titik/garis sangat minim."
-        };
+    if (userPixelCount < 100) {
+        return { totalScore: 0, keyCoverage: 0, efficiencyScore: 0, feedback: "❌ Kanvas kosong atau coretan terlalu minim." };
     }
 
-    // PENILAIAN JIKA HANYA 1 - 2 GARIS SANGAT SINGKAT
-    if (userPixelCount < 800) {
-        return {
-            totalScore: 12,
-            keyCoverage: Math.round((matchedPixelCount / (keyPixelCount || 1)) * 100),
-            offTargetPenalty: 10,
-            feedback: "⚠️ Gambar tidak lengkap, hanya beberapa garis singkat."
-        };
+    // 1. Rasio Penutupan Garis Kunci (Semakin banyak bagian garis kunci tertutup, semakin tinggi nilainya)
+    const keyCoverageRatio = matchedPixelCount / (keyPixelCount || 1); // 0.0 - 1.0
+
+    // 2. Bonus Efisiensi Goresan (Sedikit klik/tahan mousedown yang terarah = nilai efisiensi tinggi)
+    // Asumsi ideal untuk menggambar objek standar adalah 3 hingga 15 kali goresan (klik-tahan).
+    let efficiencyRatio = 1.0;
+    if (totalStrokes > 20) {
+        efficiencyRatio = Math.max(0.4, 1.0 - ((totalStrokes - 20) * 0.02));
     }
 
-    // HITUNG RASIO CAKUPAN DAN PENALTY GARIS MELENCENG
-    const keyCoverageRatio = matchedPixelCount / keyPixelCount; // 0.0 - 1.0
-    const precisionRatio = matchedPixelCount / userPixelCount;  // 0.0 - 1.0 (Berapa % garis user yg benar)
+    // Penalti jika terlalu banyak melenceng keluar garis kunci
+    const precisionPenalty = Math.max(0.5, 1.0 - (offTargetPixelCount / (userPixelCount + 1)));
 
-    // Formula Skor Ketat: 70% dari Cakupan Kunci + 30% dari Presisi Garis Siswa
-    let rawScore = (keyCoverageRatio * 70) + (precisionRatio * 30);
-    let finalScore = Math.round(rawScore);
+    // Kalkulasi Skor Akhir Bonus (Skala 0 - 100)
+    let baseScore = (keyCoverageRatio * 75) + (efficiencyRatio * 25);
+    let finalScore = Math.round(baseScore * precisionPenalty);
 
-    // Bounding Max / Min penyesuaian objektif
-    if (finalScore > 98) finalScore = 98; // Hampir mustahil 100 sempurna kecuali robot
+    if (finalScore > 99) finalScore = 99;
     if (finalScore < 5) finalScore = 5;
 
     let keyCoveragePercent = Math.round(keyCoverageRatio * 100);
-    let offTargetPercent = Math.round((offTargetPixelCount / userPixelCount) * 100);
+    let efficiencyPercent = Math.round(efficiencyRatio * 100);
 
     let feedbackMsg = "";
-    if (finalScore >= 85) {
-        feedbackMsg = "🌟 Sangat Presisi! Garis sangat akurat menutupi pola kunci jawaban.";
-    } else if (finalScore >= 60) {
-        feedbackMsg = "👍 Cukup Baik! Bentuk terlihat, namun ada garis melenceng / tidak pas dengan kunci.";
-    } else if (finalScore >= 35) {
-        feedbackMsg = "⚠️ Kurang Akurat. Garis banyak melenceng jauh dari target kunci jawaban.";
+    if (keyCoveragePercent >= 80 && totalStrokes <= 25) {
+        feedbackMsg = "🌟 Luar biasa! Garis kunci tertutup sempurna dan goresan sangat efisien rapi.";
+    } else if (keyCoveragePercent >= 50) {
+        feedbackMsg = "👍 Bagus! Cukup baik menutup pola, pertahankan ketepatan dan efisiensi garis.";
     } else {
-        feedbackMsg = "❌ Sangat Tidak Akurat / Gambar acak-acakan tidak sesuai bentuk.";
+        feedbackMsg = "⚠️ Kurang akurat. Garis putus-putus kunci masih banyak yang belum tertutup rapat.";
     }
 
     return {
         totalScore: finalScore,
         keyCoverage: keyCoveragePercent,
-        offTargetPenalty: offTargetPercent,
+        efficiencyScore: efficiencyPercent,
         feedback: feedbackMsg
     };
+}
+
+// FUNGSI RIWAYAT KANVAS (UNDO & REDO)
+function saveCanvasState() {
+    historyStepIndex++;
+    if (historyStepIndex < historySteps.length) {
+        historySteps.length = historyStepIndex;
+    }
+    historySteps.push(drawingCanvas.toDataURL());
+}
+
+function undoCanvas() {
+    if (historyStepIndex > 0) {
+        historyStepIndex--;
+        let img = new Image();
+        img.onload = () => {
+            ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            ctx.drawImage(img, 0, 0);
+        };
+        img.src = historySteps[historyStepIndex];
+    }
+}
+
+function redoCanvas() {
+    if (historyStepIndex < historySteps.length - 1) {
+        historyStepIndex++;
+        let img = new Image();
+        img.onload = () => {
+            ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            ctx.drawImage(img, 0, 0);
+        };
+        img.src = historySteps[historyStepIndex];
+    }
 }
 
 function confirmStop() {
@@ -350,25 +398,22 @@ function displayStudentResult(index) {
         document.getElementById('score-value').textContent = "0";
         document.getElementById('score-feedback').textContent = "Siswa belum menggambar.";
         document.getElementById('key-coverage').textContent = "0%";
-        document.getElementById('off-target').textContent = "0%";
+        document.getElementById('stroke-efficiency').textContent = "0%";
         return;
     }
 
-    // Gambarkan Kunci Jawaban (Merah Transparan) di Belakang
     drawGuideShape(student.shape, resCtx, resCanvas.width, resCanvas.height);
 
-    // Tumpuk Hasil Gambar Siswa di Depan
     const img = new Image();
     img.onload = () => {
         resCtx.drawImage(img, 0, 0, resCanvas.width, resCanvas.height);
     };
     img.src = data.dataUrl;
 
-    // Tampilkan Skor & Animasi
     document.getElementById('score-value').textContent = data.score;
     document.getElementById('score-feedback').textContent = data.feedback;
     document.getElementById('key-coverage').textContent = `${data.coverage}%`;
-    document.getElementById('off-target').textContent = `${data.offTarget}%`;
+    document.getElementById('stroke-efficiency').textContent = `${data.efficiency}%`;
 
     const scoreCircle = document.getElementById('score-circle');
     if (data.score >= 80) scoreCircle.style.borderColor = "#10b981";
@@ -376,19 +421,23 @@ function displayStudentResult(index) {
     else scoreCircle.style.borderColor = "#ef4444";
 }
 
-// EVENT DRAWING CANVAS
+// EVENT MENGGAMBAR & MENGHITUNG KETUKAN KLIK KIRI
 drawingCanvas.addEventListener('mousedown', startPosition);
 drawingCanvas.addEventListener('mouseup', finishedPosition);
 drawingCanvas.addEventListener('mousemove', draw);
 
 function startPosition(e) {
+    if (e.button !== 0) return; // Hanya klik kiri
     painting = true;
+    clickStrokeCount++; // Hitung 1x aksi menekan klik kiri saat membuat garis
     draw(e);
 }
 
 function finishedPosition() {
+    if (!painting) return;
     painting = false;
     ctx.beginPath();
+    saveCanvasState(); // Simpan state riwayat setiap kali selesai 1x garis klik kiri
 }
 
 function draw(e) {
@@ -414,7 +463,10 @@ eraserBtn.addEventListener('click', () => {
     eraserBtn.style.background = isEraser ? '#f43f5e' : '#475569';
 });
 clearBtn.addEventListener('click', () => {
-    if (confirm("Bersihkan kanvas?")) ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    if (confirm("Bersihkan kanvas?")) {
+        ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        saveCanvasState();
+    }
 });
 
 // ANTI CHEAT DETEKTOR
