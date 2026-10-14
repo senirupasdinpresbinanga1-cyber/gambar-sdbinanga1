@@ -1,3 +1,4 @@
+// DATA SISWA KELAS 6A & 6B
 const studentsDataByClass = {
     "6A": [
         "ABID AQILAH WAHYUDI", "AINUN HAKIMAH", "AINUN NUR AZIZAH A", "AMELIA AHMAD",
@@ -17,6 +18,7 @@ const studentsDataByClass = {
     ]
 };
 
+// 3 PAKET TEMA MASING-MASING 10 OBJEK
 const packageShapes = {
     "sekolah": ["pulpen", "buku", "tas", "pensil", "penggaris", "penghapus", "kotak_pensil", "gunting", "jangka", "buku_gambar"],
     "dapur": ["gelas", "piring", "sendok", "kompor", "pisau", "wajan", "mangkuk", "garpu", "botol", "panci"],
@@ -78,6 +80,7 @@ function shuffleArray(array) {
     return arr;
 }
 
+// FUNGSI PILIH KELAS
 function selectClass(className) {
     selectedClass = className;
     document.querySelectorAll('.btn-class').forEach(btn => {
@@ -90,6 +93,7 @@ function selectClass(className) {
     initClassPreview();
 }
 
+// FUNGSI PILIH PAKET
 function selectPackage(pkgName) {
     selectedPackage = pkgName;
     document.querySelectorAll('.btn-package').forEach(btn => {
@@ -227,7 +231,7 @@ function loadStudentTurn() {
     renderSidebarList();
 }
 
-// 30 FUNGSI PANDUAN GAMBAR 2D AWAL (BERSIH & SEDERHANA)
+// 30 FUNGSI PANDUAN GAMBAR (3 PAKET x 10 OBJEK)
 function drawGuideShape(shape, targetCtx, w, h) {
     targetCtx.clearRect(0, 0, w, h);
     targetCtx.strokeStyle = "rgba(225, 29, 72, 0.7)"; 
@@ -469,11 +473,11 @@ function calculateBonusEvaluationScore(canvasElem, shape, totalStrokes) {
 
     let feedbackMsg = "";
     if (keyCoveragePercent >= 80 && totalStrokes <= 25) {
-        feedbackMsg = "🌟 Luar biasa! Garis kunci tertutup sempurna dan goresan sangat rapi.";
+        feedbackMsg = "🌟 Luar biasa! Garis kunci tertutup sempurna dan goresan sangat efisien rapi.";
     } else if (keyCoveragePercent >= 50) {
         feedbackMsg = "👍 Bagus! Cukup baik menutup pola, pertahankan ketepatan dan efisiensi garis.";
     } else {
-        feedbackMsg = "⚠️ Kurang akurat. Garis panduan masih banyak yang belum tertutup rapat.";
+        feedbackMsg = "⚠️ Kurang akurat. Garis putus-putus kunci masih banyak yang belum tertutup rapat.";
     }
 
     return {
