@@ -18,9 +18,15 @@ const studentsDataByClass = {
     ]
 };
 
-const availableShapes = ["rumah", "mobil", "pohon", "bintang", "kapal", "bola", "cangkir", "ikan"];
+// 3 PAKET TEMA MASING-MASING 10 OBJEK
+const packageShapes = {
+    "sekolah": ["pulpen", "buku", "tas", "pensil", "penggaris", "penghapus", "kotak_pensil", "gunting", "jangka", "buku_gambar"],
+    "dapur": ["gelas", "piring", "sendok", "kompor", "pisau", "wajan", "mangkuk", "garpu", "botol", "panci"],
+    "pemandangan": ["pohon", "gunung", "rumah", "rumput", "matahari", "awan", "bunga", "sungai", "burung", "batu"]
+};
 
 let selectedClass = "6A";
+let selectedPackage = "sekolah";
 let studentsList = [];
 let studentData = {};
 let currentIndex = 0;
@@ -87,6 +93,18 @@ function selectClass(className) {
     initClassPreview();
 }
 
+// FUNGSI PILIH PAKET
+function selectPackage(pkgName) {
+    selectedPackage = pkgName;
+    document.querySelectorAll('.btn-package').forEach(btn => {
+        if (btn.getAttribute('data-package') === pkgName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
 function initClassPreview() {
     const rawNames = studentsDataByClass[selectedClass];
     sidebarCountEl.textContent = rawNames.length;
@@ -108,6 +126,8 @@ function initClassPreview() {
 function initRandomSession() {
     const rawNames = studentsDataByClass[selectedClass];
     const shuffledNames = shuffleArray(rawNames);
+    const availableShapes = packageShapes[selectedPackage];
+
     studentsList = shuffledNames.map((name) => {
         const randomShape = availableShapes[Math.floor(Math.random() * availableShapes.length)];
         return { name: name, shape: randomShape };
@@ -195,7 +215,7 @@ function loadStudentTurn() {
 
     const currentStudent = studentsList[currentIndex];
     currentPlayerEl.textContent = currentStudent.name;
-    targetBadgeEl.textContent = `Tugas: Menggambar ${currentStudent.shape.toUpperCase()}`;
+    targetBadgeEl.textContent = `Tugas: ${currentStudent.shape.toUpperCase().replace('_', ' ')}`;
 
     ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     drawGuideShape(currentStudent.shape, gCtx, guideCanvas.width, guideCanvas.height);
@@ -211,54 +231,129 @@ function loadStudentTurn() {
     renderSidebarList();
 }
 
+// 30 FUNGSI PANDUAN GAMBAR (3 PAKET x 10 OBJEK)
 function drawGuideShape(shape, targetCtx, w, h) {
     targetCtx.clearRect(0, 0, w, h);
     targetCtx.strokeStyle = "rgba(225, 29, 72, 0.7)"; 
     targetCtx.lineWidth = 3;
     targetCtx.setLineDash([6, 6]);
-
     targetCtx.beginPath();
-    if (shape === 'rumah') {
+
+    // PAKET SEKOLAH
+    if (shape === 'pulpen') {
+        targetCtx.strokeRect(340, 100, 40, 240);
+        targetCtx.moveTo(340, 100); targetCtx.lineTo(360, 50); targetCtx.lineTo(380, 100); targetCtx.closePath();
+    } else if (shape === 'buku') {
+        targetCtx.strokeRect(220, 120, 280, 200);
+        targetCtx.moveTo(360, 120); targetCtx.lineTo(360, 320);
+    } else if (shape === 'tas') {
+        targetCtx.strokeRect(250, 170, 220, 170);
+        targetCtx.strokeRect(310, 230, 100, 110);
+        targetCtx.arc(360, 170, 45, Math.PI, 0);
+    } else if (shape === 'pensil') {
+        targetCtx.strokeRect(330, 80, 60, 240);
+        targetCtx.moveTo(330, 80); targetCtx.lineTo(360, 30); targetCtx.lineTo(390, 80); targetCtx.closePath();
+    } else if (shape === 'penggaris') {
+        targetCtx.strokeRect(200, 200, 320, 60);
+        targetCtx.moveTo(240, 200); targetCtx.lineTo(240, 230);
+        targetCtx.moveTo(280, 200); targetCtx.lineTo(280, 230);
+        targetCtx.moveTo(320, 200); targetCtx.lineTo(320, 230);
+    } else if (shape === 'penghapus') {
+        targetCtx.strokeRect(260, 180, 200, 100);
+        targetCtx.moveTo(340, 180); targetCtx.lineTo(340, 280);
+    } else if (shape === 'kotak_pensil') {
+        targetCtx.strokeRect(210, 170, 300, 120);
+        targetCtx.strokeRect(230, 190, 260, 80);
+    } else if (shape === 'gunting') {
+        targetCtx.arc(290, 290, 30, 0, Math.PI*2);
+        targetCtx.arc(430, 290, 30, 0, Math.PI*2);
+        targetCtx.moveTo(310, 270); targetCtx.lineTo(410, 120);
+    } else if (shape === 'jangka') {
+        targetCtx.moveTo(360, 80); targetCtx.lineTo(280, 340);
+        targetCtx.moveTo(360, 80); targetCtx.lineTo(440, 340);
+        targetCtx.arc(360, 80, 20, 0, Math.PI*2);
+    } else if (shape === 'buku_gambar') {
+        targetCtx.strokeRect(200, 100, 320, 240);
+        targetCtx.strokeRect(230, 130, 260, 180);
+
+    // PAKET DAPUR
+    } else if (shape === 'gelas') {
+        targetCtx.moveTo(270, 140); targetCtx.lineTo(450, 140); targetCtx.lineTo(420, 320); targetCtx.lineTo(300, 320); targetCtx.closePath();
+        targetCtx.arc(440, 220, 30, -Math.PI/2, Math.PI/2);
+    } else if (shape === 'piring') {
+        targetCtx.ellipse(360, 220, 160, 80, 0, 0, Math.PI*2);
+        targetCtx.ellipse(360, 220, 100, 50, 0, 0, Math.PI*2);
+    } else if (shape === 'sendok') {
+        targetCtx.arc(360, 120, 45, 0, Math.PI*2);
+        targetCtx.strokeRect(345, 165, 30, 160);
+    } else if (shape === 'kompor') {
+        targetCtx.strokeRect(220, 180, 280, 150);
+        targetCtx.arc(290, 240, 35, 0, Math.PI*2);
+        targetCtx.arc(430, 240, 35, 0, Math.PI*2);
+    } else if (shape === 'pisau') {
+        targetCtx.strokeRect(340, 220, 40, 120);
+        targetCtx.moveTo(340, 220); targetCtx.lineTo(340, 100); targetCtx.lineTo(480, 220); targetCtx.closePath();
+    } else if (shape === 'wajan') {
+        targetCtx.arc(360, 220, 110, 0, Math.PI);
+        targetCtx.strokeRect(470, 200, 100, 20);
+    } else if (shape === 'mangkuk') {
+        targetCtx.arc(360, 180, 120, 0, Math.PI);
+        targetCtx.strokeRect(280, 300, 160, 20);
+    } else if (shape === 'garpu') {
+        targetCtx.strokeRect(345, 180, 30, 160);
+        targetCtx.moveTo(345, 180); targetCtx.lineTo(345, 110);
+        targetCtx.moveTo(360, 180); targetCtx.lineTo(360, 110);
+        targetCtx.moveTo(375, 180); targetCtx.lineTo(375, 110);
+    } else if (shape === 'botol') {
+        targetCtx.strokeRect(330, 100, 60, 40);
+        targetCtx.strokeRect(300, 140, 120, 200);
+    } else if (shape === 'panci') {
+        targetCtx.strokeRect(240, 160, 240, 160);
+        targetCtx.arc(360, 160, 60, Math.PI, 0);
+        targetCtx.strokeRect(180, 200, 60, 20);
+
+    // PAKET PEMANDANGAN
+    } else if (shape === 'pohon') {
+        targetCtx.strokeRect(335, 230, 50, 140);
+        targetCtx.arc(360, 160, 100, 0, Math.PI * 2);
+    } else if (shape === 'gunung') {
+        targetCtx.moveTo(150, 340); targetCtx.lineTo(360, 120); targetCtx.lineTo(570, 340); targetCtx.closePath();
+        targetCtx.moveTo(250, 340); targetCtx.lineTo(470, 180); targetCtx.lineTo(600, 340);
+    } else if (shape === 'rumah') {
         targetCtx.strokeRect(210, 180, 300, 180);
         targetCtx.moveTo(170, 180); targetCtx.lineTo(360, 70); targetCtx.lineTo(550, 180);
         targetCtx.strokeRect(325, 260, 70, 100);
         targetCtx.strokeRect(240, 210, 55, 55); targetCtx.strokeRect(425, 210, 55, 55);
-    } else if (shape === 'mobil') {
-        targetCtx.strokeRect(170, 210, 380, 100);
-        targetCtx.moveTo(250, 210); targetCtx.lineTo(300, 120); targetCtx.lineTo(420, 120); targetCtx.lineTo(470, 210);
-        targetCtx.arc(260, 310, 32, 0, Math.PI * 2);
-        targetCtx.moveTo(490, 310); targetCtx.arc(460, 310, 32, 0, Math.PI * 2);
-    } else if (shape === 'pohon') {
-        targetCtx.strokeRect(335, 230, 50, 140);
-        targetCtx.arc(360, 160, 100, 0, Math.PI * 2);
-    } else if (shape === 'bintang') {
-        let cx = 360, cy = 200, outer = 120, inner = 50;
-        for (let i = 0; i < 5; i++) {
-            targetCtx.lineTo(cx + Math.cos((18 + i * 72) * Math.PI / 180) * outer, cy - Math.sin((18 + i * 72) * Math.PI / 180) * outer);
-            targetCtx.lineTo(cx + Math.cos((54 + i * 72) * Math.PI / 180) * inner, cy - Math.sin((54 + i * 72) * Math.PI / 180) * inner);
+    } else if (shape === 'rumput') {
+        for(let i=180; i<540; i+=30) {
+            targetCtx.moveTo(i, 340); targetCtx.lineTo(i+10, 280); targetCtx.lineTo(i+20, 340);
         }
-        targetCtx.closePath();
-    } else if (shape === 'kapal') {
-        targetCtx.moveTo(170, 260); targetCtx.lineTo(550, 260); targetCtx.lineTo(470, 330); targetCtx.lineTo(250, 330); targetCtx.closePath();
-        targetCtx.moveTo(360, 260); targetCtx.lineTo(360, 80); targetCtx.lineTo(460, 160); targetCtx.lineTo(360, 160);
-    } else if (shape === 'bola') {
-        targetCtx.arc(360, 200, 105, 0, Math.PI * 2);
-        targetCtx.moveTo(360, 155); targetCtx.lineTo(395, 180); targetCtx.lineTo(380, 225);
-        targetCtx.lineTo(340, 225); targetCtx.lineTo(325, 180); targetCtx.closePath();
-        targetCtx.moveTo(360, 95); targetCtx.lineTo(360, 155);
-        targetCtx.moveTo(395, 180); targetCtx.lineTo(465, 165);
-        targetCtx.moveTo(380, 225); targetCtx.lineTo(445, 280);
-        targetCtx.moveTo(340, 225); targetCtx.lineTo(275, 280);
-        targetCtx.moveTo(325, 180); targetCtx.lineTo(255, 165);
-    } else if (shape === 'cangkir') {
-        targetCtx.strokeRect(240, 150, 220, 170);
-        targetCtx.arc(460, 235, 50, -Math.PI/2, Math.PI/2);
-        targetCtx.strokeRect(205, 320, 290, 16);
-    } else if (shape === 'ikan') {
-        targetCtx.ellipse(360, 200, 140, 80, 0, 0, Math.PI * 2);
-        targetCtx.moveTo(500, 200); targetCtx.lineTo(580, 130); targetCtx.lineTo(580, 270); targetCtx.closePath();
-        targetCtx.arc(260, 185, 9, 0, Math.PI*2);
+    } else if (shape === 'matahari') {
+        targetCtx.arc(360, 180, 60, 0, Math.PI * 2);
+        for(let a=0; a<360; a+=45) {
+            let rx = 360 + Math.cos(a*Math.PI/180)*85;
+            let ry = 180 + Math.sin(a*Math.PI/180)*85;
+            targetCtx.moveTo(360 + Math.cos(a*Math.PI/180)*60, 180 + Math.sin(a*Math.PI/180)*60);
+            targetCtx.lineTo(rx, ry);
+        }
+    } else if (shape === 'awan') {
+        targetCtx.arc(320, 200, 40, 0, Math.PI*2);
+        targetCtx.arc(370, 180, 50, 0, Math.PI*2);
+        targetCtx.arc(420, 200, 40, 0, Math.PI*2);
+    } else if (shape === 'bunga') {
+        targetCtx.strokeRect(355, 200, 10, 140);
+        targetCtx.arc(360, 160, 35, 0, Math.PI * 2);
+    } else if (shape === 'sungai') {
+        targetCtx.moveTo(320, 140); targetCtx.quadraticCurveTo(400, 240, 280, 340);
+        targetCtx.moveTo(400, 140); targetCtx.quadraticCurveTo(480, 240, 360, 340);
+    } else if (shape === 'burung') {
+        targetCtx.arc(330, 200, 30, Math.PI, 0);
+        targetCtx.arc(390, 200, 30, Math.PI, 0);
+    } else if (shape === 'batu') {
+        targetCtx.moveTo(250, 340); targetCtx.quadraticCurveTo(300, 250, 360, 340);
+        targetCtx.moveTo(340, 340); targetCtx.quadraticCurveTo(420, 270, 480, 340);
     }
+    
     targetCtx.stroke();
     targetCtx.setLineDash([]);
 }
@@ -457,7 +552,7 @@ function displayStudentResult(index) {
     const student = studentsList[index];
     const data = studentData[student.name];
 
-    document.getElementById('result-student-name').textContent = `Hasil Gambaran: ${student.name} (${student.shape.toUpperCase()})`;
+    document.getElementById('result-student-name').textContent = `Hasil Gambaran: ${student.name} (${student.shape.toUpperCase().replace('_', ' ')})`;
 
     const resCanvas = document.getElementById('resultCanvas');
     const resCtx = resCanvas.getContext('2d');
