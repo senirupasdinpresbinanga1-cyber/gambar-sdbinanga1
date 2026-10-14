@@ -3,26 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seni Rupa - Tantangan Menggambar Kelas 6A</title>
+    <title>Game Sambung Gambar Estafet - Kelas 6A</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Google Font & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="fullscreen-bg"></div>
 
-    <div class="app-container" id="appContainer">
+    <div class="app-container">
         <!-- HEADER -->
         <header class="app-header">
-            <h1>🎨 Seni Rupa <span class="badge">Kelas 6A</span></h1>
-            <p>Uji Kreativitas & Ketepatan Garis Menggambar Rumah</p>
+            <h1>🎨 Estafet Art Challenge <span class="badge">Kelas 6A</span></h1>
+            <p>Satu Laptop, Satu Mouse, Berkreasi Bersama!</p>
         </header>
 
         <!-- PANEL SETUP -->
         <div id="setup-panel" class="glass-card">
             <div class="setup-content">
-                <h3>📜 Peraturan & Panduan</h3>
-                <p>Setiap siswa Kelas 6A mendapat waktu <strong>2 menit (120 detik)</strong> untuk menggambar bentuk rumah sesuai kunci jawaban menggunakan mouse secara bergantian. Sistem akan otomatis menilai kemiripan tata letak garis di akhir permainan!</p>
-                <button id="start-btn" class="btn btn-glow">🚀 Mulai Game Sekarang (Fullscreen)</button>
+                <h3>📜 Peraturan & Persiapan</h3>
+                <p>Setiap siswa memiliki waktu <strong>2 menit (120 detik)</strong> untuk menggambar secara bergantian menggunakan mouse. Di akhir sesi, sistem akan mencocokkan hasil karya dengan kunci jawaban (Rumah) untuk memberikan nilai!</p>
+                <button id="start-btn" class="btn btn-glow">🚀 Mulai Game Sekarang</button>
             </div>
         </div>
 
@@ -31,61 +32,56 @@
             <!-- Info Bar -->
             <div class="game-info-bar">
                 <div class="info-item">
-                    <span class="label">Pemain Saat Ini:</span>
+                    <span class="label">Giliran Saat Ini:</span>
                     <h2 id="current-player" class="highlight-name">-</h2>
                 </div>
                 <div class="timer-display">
                     ⏳ Sisa Waktu: <span id="timer">120</span> dtk
                 </div>
-                <div class="action-top-group">
-                    <button id="fullscreen-btn" class="btn btn-secondary btn-sm" title="Perbesar/Kecilkan Layar">⛶ Fullscreen</button>
-                    <button id="stop-btn" class="btn btn-warning btn-sm">⏹️ Stop / Reset</button>
+                <div class="info-item next">
+                    <span class="label">Berikutnya:</span>
+                    <span id="next-player">-</span>
                 </div>
             </div>
 
-            <!-- Area Kanvas dengan Panduan Rumah -->
+            <!-- Area Kanvas -->
             <div class="canvas-wrapper">
-                <!-- Panduan Gambar Rumah di Background Kanvas -->
-                <canvas id="guideCanvas" width="700" height="380"></canvas>
-                <!-- Kanvas Tempat Menggambar Siswa -->
-                <canvas id="drawingCanvas" width="700" height="380"></canvas>
+                <canvas id="drawingCanvas" width="900" height="500"></canvas>
             </div>
 
             <!-- Kontrol Alat Gambar -->
             <div class="tool-controls">
                 <div class="tool-group">
-                    <label>Warna: <input type="color" id="colorPicker" value="#1e293b"></label>
-                    <label>Ukuran: <input type="range" id="brushSize" min="2" max="20" value="5"></label>
+                    <label>Warna: <input type="color" id="colorPicker" value="#2b2d42"></label>
+                    <label>Ukuran: <input type="range" id="brushSize" min="2" max="25" value="6"></label>
                 </div>
                 <div class="action-group">
                     <button id="eraser-btn" class="btn btn-secondary">🧹 Penghapus</button>
                     <button id="clear-btn" class="btn btn-danger">🗑️ Bersihkan</button>
-                    <button id="next-turn-btn" class="btn btn-success">➡️ Selesai / Simpan & Lanjut</button>
+                    <button id="next-turn-btn" class="btn btn-success">➡️ Selesai / Ganti Giliran</button>
+                    <button id="stop-btn" class="btn btn-warning">⏹️ Stop / Reset</button>
                 </div>
             </div>
         </div>
 
-        <!-- PANEL SELESAI & PENILAIAN INDIVIDUAL -->
+        <!-- PANEL SELESAI & PENILAIAN -->
         <div id="finish-panel" class="glass-card hidden">
-            <h2>🏆 Hasil Karya & Penilaian Siswa Kelas 6A</h2>
-            <p id="finish-subtitle">Semua siswa telah menyelesaikan tantangan menggambar rumah!</p>
+            <h2>🏆 Hasil Karya Akhir Kelas 6A & Penilaian</h2>
+            <p>Semua siswa telah berpartisipasi dengan luar biasa!</p>
             
             <div class="result-container">
                 <div class="canvas-result-box">
-                    <canvas id="resultCanvas" width="450" height="260"></canvas>
-                    <h3 id="result-student-name" class="student-result-title">-</h3>
+                    <h4>Hasil Gambar Estafet:</h4>
+                    <canvas id="resultCanvas" width="500" height="350"></canvas>
                 </div>
                 <div class="score-box">
-                    <h4>🎯 Skor Kemiripan Kunci Jawaban</h4>
+                    <h4>🎯 Analisis Kemiripan Kunci Jawaban (Rumah)</h4>
                     <div class="score-circle">
                         <span id="score-value">0</span><small>/100</small>
                     </div>
-                    <p id="score-feedback" class="feedback-text">Menganalisis tata letak garis...</p>
-                    <div class="result-nav-buttons">
-                        <button id="prev-result-btn" class="btn btn-secondary" style="display:none;">⬅️ Sebelumnya</button>
-                        <button id="next-result-btn" class="btn btn-primary" style="display:none;">Selanjutnya ➡️</button>
-                    </div>
-                    <button id="restart-btn" class="btn btn-glow" style="margin-top: 10px;">🔄 Main Lagi dari Awal</button>
+                    <p id="score-feedback" class="feedback-text">Menganalisis kemiripan pola garis...</p>
+                    <button id="download-btn" class="btn btn-glow">📥 Unduh Gambar Akhir</button>
+                    <button id="restart-btn" class="btn btn-secondary">🔄 Main Lagi dari Awal</button>
                 </div>
             </div>
         </div>
