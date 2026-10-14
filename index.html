@@ -11,92 +11,123 @@
 <body>
     <div class="fullscreen-bg"></div>
 
-    <!-- OVERLAY PERINGATAN KELUAR LAYAR PENUH / ANTI-CHEAT -->
+    <!-- OVERLAY PERINGATAN ANTI-CHEAT -->
     <div id="warning-overlay" class="full-overlay" style="display: none;">
         <div class="card warning-card">
-            <h2 style="margin-bottom: 12px; color: #dc3545; font-size: 26px;"><i class="fas fa-exclamation-triangle"></i> PERINGATAN!</h2>
-            <p style="color: #1e293b; font-size: 15px; font-weight: 700; margin-bottom: 10px;">Anda terdeteksi keluar dari layar penuh atau berpindah aplikasi.</p>
-            <p style="color: #64748b; font-size: 13px; margin-bottom: 20px; line-height: 1.5;">Sistem mewajibkan layar penuh selama sesi menggambar Seni Rupa.</p>
-            <button class="btn btn-danger" onclick="returnToFullscreen()" style="width: 100%; padding: 12px; font-size: 16px;"><i class="fas fa-compress"></i> Kembali ke Layar Penuh</button>
+            <h2 style="margin-bottom: 12px; color: #dc3545; font-size: 24px;"><i class="fas fa-exclamation-triangle"></i> PERINGATAN!</h2>
+            <p style="color: #1e293b; font-size: 15px; font-weight: 700; margin-bottom: 10px;">Anda terdeteksi keluar dari layar penuh / berpindah aplikasi.</p>
+            <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">Sistem mewajibkan layar penuh selama sesi berlangsung.</p>
+            <button class="btn btn-danger" onclick="returnToFullscreen()" style="width: 100%; padding: 12px;"><i class="fas fa-compress"></i> Kembali ke Layar Penuh</button>
         </div>
     </div>
 
-    <div class="app-container" id="appContainer">
-        <!-- HEADER -->
-        <header class="app-header">
-            <h1>🎨 Seni Rupa <span class="badge">Kelas 6A</span></h1>
-            <p>Uji Kreativitas & Ketepatan Garis Menggambar Rumah</p>
-        </header>
-
-        <!-- PANEL SETUP -->
-        <div id="setup-panel" class="glass-card">
-            <div class="setup-content">
-                <h3>📜 Peraturan & Panduan</h3>
-                <p>Setiap siswa Kelas 6A mendapat waktu <strong>2 menit (120 detik)</strong> untuk menggambar bentuk rumah sesuai kunci jawaban menggunakan mouse secara bergantian. Sistem akan otomatis mengunci layar penuh dan menilai kemiripan tata letak garis di akhir permainan!</p>
-                <button id="start-btn" class="btn btn-glow">🚀 Mulai Game Sekarang (Fullscreen)</button>
+    <!-- UTAMA: SIDEBAR DAFTAR SISWA + AREA GAME -->
+    <div class="main-layout">
+        
+        <!-- SIDEBAR DAFTAR SISWA -->
+        <aside class="student-sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-users"></i> Daftar Siswa (25)</h3>
+                <small>Kelas 6A - Seni Rupa</small>
             </div>
-        </div>
+            <ul id="student-list" class="student-list">
+                <!-- Daftar siswa digenerate otomatis lewat JS -->
+            </ul>
+        </aside>
 
-        <!-- PANEL GAME UTAMA -->
-        <div id="game-panel" class="glass-card hidden">
-            <!-- Info Bar -->
-            <div class="game-info-bar">
-                <div class="info-item">
-                    <span class="label">Pemain Saat Ini:</span>
-                    <h2 id="current-player" class="highlight-name">-</h2>
-                </div>
-                <div class="timer-display">
-                    ⏳ Sisa Waktu: <span id="timer">120</span> dtk
-                </div>
-                <div class="action-top-group">
-                    <button id="stop-btn" class="btn btn-warning btn-sm">⏹️ Stop / Reset</button>
-                </div>
-            </div>
+        <!-- KONTEN UTAMA -->
+        <main class="app-container">
+            <!-- HEADER -->
+            <header class="app-header">
+                <h1>🎨 Seni Rupa <span class="badge">Kelas 6A</span></h1>
+                <p>Uji Ketepatan Garis & Presisi Menggambar (Sistem Penilaian Ketat IoU Matrix)</p>
+            </header>
 
-            <!-- Area Kanvas dengan Panduan Rumah -->
-            <div class="canvas-wrapper">
-                <canvas id="guideCanvas" width="700" height="380"></canvas>
-                <canvas id="drawingCanvas" width="700" height="380"></canvas>
-            </div>
-
-            <!-- Kontrol Alat Gambar -->
-            <div class="tool-controls">
-                <div class="tool-group">
-                    <label>Warna: <input type="color" id="colorPicker" value="#1e293b"></label>
-                    <label>Ukuran: <input type="range" id="brushSize" min="2" max="20" value="5"></label>
-                </div>
-                <div class="action-group">
-                    <button id="eraser-btn" class="btn btn-secondary">🧹 Penghapus</button>
-                    <button id="clear-btn" class="btn btn-danger">🗑️ Bersihkan</button>
-                    <button id="next-turn-btn" class="btn btn-success">➡️ Selesai / Simpan & Lanjut</button>
+            <!-- PANEL SETUP -->
+            <div id="setup-panel" class="glass-card">
+                <div class="setup-content">
+                    <h3>📜 Peraturan & Panduan Penilaian</h3>
+                    <p>
+                        Siswa akan menggambar pola yang telah ditentukan secara bergiliran. Sistem penilaian menggunakan 
+                        <strong>Algoritma IoU (Intersection over Union) Ketat</strong>:
+                    </p>
+                    <ul class="rule-list">
+                        <li>❌ <strong>Kanvas Kosong / Garis Minim:</strong> Nilai 0 - 15</li>
+                        <li>⚠️ <strong>Melenceng / Garis Miring / Tidak Pas:</strong> Nilai berkisar 40 - 70 (seperti contoh nilai 60-an)</li>
+                        <li>✅ <strong>Sangat Presisi Menutupi Garis Kunci:</strong> Nilai 85 - 100</li>
+                        <li>🎨 Setiap siswa mendapatkan objek gambar berbeda (Rumah, Mobil, Pohon, Kapal, Bunga, dll).</li>
+                    </ul>
+                    <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan Kelas (Fullscreen)</button>
                 </div>
             </div>
-        </div>
 
-        <!-- PANEL SELESAI & PENILAIAN INDIVIDUAL -->
-        <div id="finish-panel" class="glass-card hidden">
-            <h2>🏆 Hasil Karya & Penilaian Siswa Kelas 6A</h2>
-            <p id="finish-subtitle">Semua siswa telah menyelesaikan tantangan menggambar rumah!</p>
-            
-            <div class="result-container">
-                <div class="canvas-result-box">
-                    <canvas id="resultCanvas" width="450" height="260"></canvas>
-                    <h3 id="result-student-name" class="student-result-title">-</h3>
-                </div>
-                <div class="score-box">
-                    <h4>🎯 Skor Kemiripan Kunci Jawaban</h4>
-                    <div class="score-circle">
-                        <span id="score-value">0</span><small>/100</small>
+            <!-- PANEL GAME UTAMA -->
+            <div id="game-panel" class="glass-card hidden">
+                <div class="game-info-bar">
+                    <div class="info-item">
+                        <span class="label">Pemain Saat Ini:</span>
+                        <h2 id="current-player" class="highlight-name">-</h2>
+                        <span id="target-object-badge" class="target-badge">-</span>
                     </div>
-                    <p id="score-feedback" class="feedback-text">Menganalisis tata letak garis...</p>
-                    <div class="result-nav-buttons">
-                        <button id="prev-result-btn" class="btn btn-secondary" style="display:none;">⬅️ Sebelumnya</button>
-                        <button id="next-result-btn" class="btn btn-primary" style="display:none;">Selanjutnya ➡️</button>
+                    <div class="timer-display">
+                        ⏳ Sisa Waktu: <span id="timer">120</span> dtk
                     </div>
-                    <button id="restart-btn" class="btn btn-glow" style="margin-top: 10px;">🔄 Main Lagi dari Awal</button>
+                    <div class="action-top-group">
+                        <button id="stop-btn" class="btn btn-warning btn-sm"><i class="fas fa-stop"></i> Reset Sesi</button>
+                    </div>
+                </div>
+
+                <!-- Area Kanvas -->
+                <div class="canvas-wrapper">
+                    <canvas id="guideCanvas" width="650" height="350"></canvas>
+                    <canvas id="drawingCanvas" width="650" height="350"></canvas>
+                </div>
+
+                <!-- Kontrol Alat Gambar -->
+                <div class="tool-controls">
+                    <div class="tool-group">
+                        <label>Warna: <input type="color" id="colorPicker" value="#0f172a"></label>
+                        <label>Ketebalan: <input type="range" id="brushSize" min="3" max="15" value="6"></label>
+                    </div>
+                    <div class="action-group">
+                        <button id="eraser-btn" class="btn btn-secondary"><i class="fas fa-eraser"></i> Penghapus</button>
+                        <button id="clear-btn" class="btn btn-danger"><i class="fas fa-trash"></i> Bersihkan</button>
+                        <button id="next-turn-btn" class="btn btn-success"><i class="fas fa-arrow-right"></i> Simpan & Lanjut</button>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- PANEL SELESAI & HASIL AKURASI -->
+            <div id="finish-panel" class="glass-card hidden">
+                <h2>🏆 Laporan Analisis Akurasi Ketepatan Garis</h2>
+                <p id="finish-subtitle" style="color: #94a3b8; font-size: 13px;">Klik nama siswa di daftar sebelah kiri untuk melihat detail jawaban.</p>
+                
+                <div class="result-container">
+                    <div class="canvas-result-box">
+                        <canvas id="resultCanvas" width="480" height="280"></canvas>
+                        <h3 id="result-student-name" class="student-result-title">-</h3>
+                    </div>
+                    <div class="score-box">
+                        <h4>🎯 Skor Presisi & Akurasi</h4>
+                        <div class="score-circle" id="score-circle">
+                            <span id="score-value">0</span><small>/100</small>
+                        </div>
+                        <p id="score-feedback" class="feedback-text">Menganalisis matriks piksel...</p>
+                        
+                        <div class="score-breakdown">
+                            <div class="breakdown-item">Cakupan Kunci: <span id="key-coverage">0%</span></div>
+                            <div class="breakdown-item">Garis Melenceng: <span id="off-target">0%</span></div>
+                        </div>
+
+                        <div class="result-nav-buttons">
+                            <button id="prev-result-btn" class="btn btn-secondary">⬅️ Prev</button>
+                            <button id="next-result-btn" class="btn btn-primary">Next ➡️</button>
+                        </div>
+                        <button id="restart-btn" class="btn btn-glow" style="margin-top: 10px; width:100%;"><i class="fas fa-redo"></i> Main Lagi dari Awal</button>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script src="script.js"></script>
