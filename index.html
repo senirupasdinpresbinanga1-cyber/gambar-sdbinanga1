@@ -3,55 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Sambung Gambar - Kelas 6A</title>
+    <title>Game Sambung Gambar Estafet - Kelas 6A</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Google Font & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>🎨 Game Sambung Gambar Estafet Kelas 6A</h1>
-        
-        <!-- Panel Kontrol / Setup Awal -->
-        <div id="setup-panel" class="card">
-            <h3>Persiapan Game</h3>
-            <p>Sistem akan mengacak urutan nama anak Kelas 6A secara otomatis.</p>
-            <button id="start-btn" class="btn primary">Mulai Game & Acak Urutan</button>
+    <div class="fullscreen-bg"></div>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <h1>🎨 Estafet Art Challenge <span class="badge">Kelas 6A</span></h1>
+            <p>Satu Laptop, Satu Mouse, Berkreasi Bersama!</p>
+        </header>
+
+        <!-- PANEL SETUP -->
+        <div id="setup-panel" class="glass-card">
+            <div class="setup-content">
+                <h3>📜 Peraturan & Persiapan</h3>
+                <p>Setiap siswa memiliki waktu <strong>2 menit (120 detik)</strong> untuk menggambar secara bergantian menggunakan mouse. Di akhir sesi, sistem akan mencocokkan hasil karya dengan kunci jawaban (Rumah) untuk memberikan nilai!</p>
+                <button id="start-btn" class="btn btn-glow">🚀 Mulai Game Sekarang</button>
+            </div>
         </div>
 
-        <!-- Panel Permainan Utama -->
-        <div id="game-panel" class="card hidden">
-            <div class="game-info">
-                <div class="timer-box">Waktu: <span id="timer">30</span> detik</div>
-                <div class="turn-box">
-                    Giliran Pemain: <h2 id="current-player">-</h2>
+        <!-- PANEL GAME UTAMA -->
+        <div id="game-panel" class="glass-card hidden">
+            <!-- Info Bar -->
+            <div class="game-info-bar">
+                <div class="info-item">
+                    <span class="label">Giliran Saat Ini:</span>
+                    <h2 id="current-player" class="highlight-name">-</h2>
                 </div>
-                <div class="next-box">
-                    Pemain Berikutnya: <span id="next-player">-</span>
+                <div class="timer-display">
+                    ⏳ Sisa Waktu: <span id="timer">120</span> dtk
+                </div>
+                <div class="info-item next">
+                    <span class="label">Berikutnya:</span>
+                    <span id="next-player">-</span>
                 </div>
             </div>
 
-            <!-- Area Kanvas Menggambar -->
-            <div class="canvas-container">
-                <canvas id="drawingCanvas" width="800" height="500"></canvas>
+            <!-- Area Kanvas -->
+            <div class="canvas-wrapper">
+                <canvas id="drawingCanvas" width="900" height="500"></canvas>
             </div>
 
             <!-- Kontrol Alat Gambar -->
             <div class="tool-controls">
-                <label>Warna: <input type="color" id="colorPicker" value="#000000"></label>
-                <label>Ukuran Kuas: <input type="range" id="brushSize" min="1" max="20" value="5"></label>
-                <button id="eraser-btn" class="btn secondary">Penghapus</button>
-                <button id="clear-btn" class="btn danger">Bersihkan Kanvas</button>
-                <button id="next-turn-btn" class="btn success">Selesai / Giliran Berikutnya ➡️</button>
+                <div class="tool-group">
+                    <label>Warna: <input type="color" id="colorPicker" value="#2b2d42"></label>
+                    <label>Ukuran: <input type="range" id="brushSize" min="2" max="25" value="6"></label>
+                </div>
+                <div class="action-group">
+                    <button id="eraser-btn" class="btn btn-secondary">🧹 Penghapus</button>
+                    <button id="clear-btn" class="btn btn-danger">🗑️ Bersihkan</button>
+                    <button id="next-turn-btn" class="btn btn-success">➡️ Selesai / Ganti Giliran</button>
+                    <button id="stop-btn" class="btn btn-warning">⏹️ Stop / Reset</button>
+                </div>
             </div>
         </div>
 
-        <!-- Panel Selesai -->
-        <div id="finish-panel" class="card hidden">
-            <h2>🎉 Game Selesai!</h2>
-            <p>Semua siswa Kelas 6A telah menyelesaikan gambar estafet ini.</p>
-            <canvas id="resultCanvas" width="800" height="500"></canvas>
-            <br>
-            <button id="download-btn" class="btn primary">Simpan Gambar Akhir</button>
-            <button id="restart-btn" class="btn secondary">Main Lagi dari Awal</button>
+        <!-- PANEL SELESAI & PENILAIAN -->
+        <div id="finish-panel" class="glass-card hidden">
+            <h2>🏆 Hasil Karya Akhir Kelas 6A & Penilaian</h2>
+            <p>Semua siswa telah berpartisipasi dengan luar biasa!</p>
+            
+            <div class="result-container">
+                <div class="canvas-result-box">
+                    <h4>Hasil Gambar Estafet:</h4>
+                    <canvas id="resultCanvas" width="500" height="350"></canvas>
+                </div>
+                <div class="score-box">
+                    <h4>🎯 Analisis Kemiripan Kunci Jawaban (Rumah)</h4>
+                    <div class="score-circle">
+                        <span id="score-value">0</span><small>/100</small>
+                    </div>
+                    <p id="score-feedback" class="feedback-text">Menganalisis kemiripan pola garis...</p>
+                    <button id="download-btn" class="btn btn-glow">📥 Unduh Gambar Akhir</button>
+                    <button id="restart-btn" class="btn btn-secondary">🔄 Main Lagi dari Awal</button>
+                </div>
+            </div>
         </div>
     </div>
 
