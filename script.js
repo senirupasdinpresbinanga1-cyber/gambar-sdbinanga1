@@ -623,11 +623,11 @@ eraserBtn.addEventListener('click', () => {
     isEraser = !isEraser;
     eraserBtn.style.background = isEraser ? '#f43f5e' : '#475569';
 });
+
+// PERBAIKAN: Ditekan langsung bersihkan kanvas tanpa notifikasi/confirm & tanpa keluar fullscreen
 clearBtn.addEventListener('click', () => {
-    if (confirm("Bersihkan kanvas?")) {
-        ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-        saveCanvasState();
-    }
+    ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    saveCanvasState();
 });
 
 document.addEventListener('fullscreenchange', () => {
