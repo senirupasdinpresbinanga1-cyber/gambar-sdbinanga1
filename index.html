@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Sambung Gambar - Kelas 6A</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Game Sambung Gambar Estafet Kelas 6A</h1>
+        
+        <!-- Panel Kontrol / Setup Awal -->
+        <div id="setup-panel" class="card">
+            <h3>Persiapan Game</h3>
+            <p>Sistem akan mengacak urutan nama anak Kelas 6A secara otomatis.</p>
+            <button id="start-btn" class="btn primary">Mulai Game & Acak Urutan</button>
+        </div>
+
+        <!-- Panel Permainan Utama -->
+        <div id="game-panel" class="card hidden">
+            <div class="game-info">
+                <div class="timer-box">Waktu: <span id="timer">30</span> detik</div>
+                <div class="turn-box">
+                    Giliran Pemain: <h2 id="current-player">-</h2>
+                </div>
+                <div class="next-box">
+                    Pemain Berikutnya: <span id="next-player">-</span>
+                </div>
+            </div>
+
+            <!-- Area Kanvas Menggambar -->
+            <div class="canvas-container">
+                <canvas id="drawingCanvas" width="800" height="500"></canvas>
+            </div>
+
+            <!-- Kontrol Alat Gambar -->
+            <div class="tool-controls">
+                <label>Warna: <input type="color" id="colorPicker" value="#000000"></label>
+                <label>Ukuran Kuas: <input type="range" id="brushSize" min="1" max="20" value="5"></label>
+                <button id="eraser-btn" class="btn secondary">Penghapus</button>
+                <button id="clear-btn" class="btn danger">Bersihkan Kanvas</button>
+                <button id="next-turn-btn" class="btn success">Selesai / Giliran Berikutnya ➡️</button>
+            </div>
+        </div>
+
+        <!-- Panel Selesai -->
+        <div id="finish-panel" class="card hidden">
+            <h2>🎉 Game Selesai!</h2>
+            <p>Semua siswa Kelas 6A telah menyelesaikan gambar estafet ini.</p>
+            <canvas id="resultCanvas" width="800" height="500"></canvas>
+            <br>
+            <button id="download-btn" class="btn primary">Simpan Gambar Akhir</button>
+            <button id="restart-btn" class="btn secondary">Main Lagi dari Awal</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
