@@ -65,8 +65,8 @@
 
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`.</li>
-                        <li>🎨 <strong>Kolom Putih Polos:</strong> Klik palet warna di bawah untuk memasukkannya secara berurutan ke 5 kolom putih berbingkai hitam.</li>
-                        <li>⏱️ <strong>Durasi 2 Menit:</strong> Waktu otomatis berjalan bergantian per siswa.</li>
+                        <li>🎨 <strong>Cara Kerja:</strong> Klik salah satu dari 5 kolom putih untuk memilihnya, lalu klik warna di palet untuk memasukkan/mengganti warna.</li>
+                        <li>⚡ <strong>Real-time Sync:</strong> Nilai siswa langsung tersimpan ke database begitu gilirannya selesai.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan (Fullscreen)</button>
                 </div>
@@ -95,21 +95,19 @@
                     </div>
 
                     <div class="mixing-workspace">
-                        <span class="box-label">🧪 Kolom Campuran 5 Warna (Klik slot untuk mengosongkan):</span>
+                        <span class="box-label" id="instruction-slot-label">🧪 Pilih Kolom (Klik kotak di bawah), lalu pilih warna dari palet:</span>
                         <div class="selected-slots-group" id="selected-slots"></div>
                     </div>
 
                     <div class="palette-pool-box">
-                        <span class="box-label">🎨 Palet Banyak Warna (Klik untuk mengisi kolom di atas):</span>
+                        <span class="box-label">🎨 Palet Banyak Warna (Klik untuk mengisi kolom yang dipilih):</span>
                         <div id="color-palette-grid" class="palette-grid"></div>
                     </div>
                 </div>
 
                 <div class="tool-controls">
                     <div class="tool-group-history">
-                        <button id="undo-btn" class="btn btn-secondary btn-sm" onclick="undoColor()"><i class="fas fa-undo"></i> Undo</button>
-                        <button id="redo-btn" class="btn btn-secondary btn-sm" onclick="redoColor()"><i class="fas fa-redo"></i> Redo</button>
-                        <button id="clear-btn" class="btn btn-danger btn-sm" onclick="clearSlots()"><i class="fas fa-trash"></i> Bersihkan</button>
+                        <button id="clear-btn" class="btn btn-danger btn-sm" onclick="clearSlots()"><i class="fas fa-trash"></i> Bersihkan Semua Kolom</button>
                     </div>
                     <div class="action-group">
                         <button id="next-turn-btn" class="btn btn-success" onclick="triggerSelesaiButton()"><i class="fas fa-arrow-right"></i> Selesai & Lanjut</button>
@@ -118,8 +116,8 @@
             </div>
 
             <div id="finish-panel" class="glass-card hidden">
-                <h2>🏆 Laporan Hasil Akhir & Sinkronisasi Spreadsheet</h2>
-                <p id="sync-status-msg" style="color: #38bdf8; font-size: 13px; margin-bottom: 15px;">Mengirim data ke Google Spreadsheet...</p>
+                <h2>🏆 Laporan Sesi Selesai</h2>
+                <p id="sync-status-msg" style="color: #38bdf8; font-size: 13px; margin-bottom: 15px;">Semua nilai siswa telah berhasil dikirim ke Google Spreadsheet secara real-time.</p>
                 
                 <div class="result-table-wrapper">
                     <table class="result-table" id="result-table-element">
