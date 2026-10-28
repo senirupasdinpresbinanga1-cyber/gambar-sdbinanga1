@@ -63,7 +63,7 @@
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`.</li>
                         <li>⚠️ <strong>Aturan Kolom Penuh:</strong> Ke-5 kolom wajib terisi penuh. Jika ada 1 kolom saja yang kosong, nilai otomatis 0%.</li>
-                        <li>🎯 <strong>Penilaian Presisi:</strong> Sistem penilaian diperketat mutlak; salah warna jauh langsung bernilai 0%.</li>
+                        <li>🎯 <strong>Sistem Penilaian Mutlak:</strong> Menggunakan deteksi spektrum warna (Hue & RGB Proximity). Salah keluarga warna (misal target hijau diisi hitam) langsung bernilai rendah (25% atau ke bawah).</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan (Fullscreen)</button>
                 </div>
