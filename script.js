@@ -10,7 +10,7 @@ let isGameActive = false;
 
 let currentSoalObj = null;
 let currentSlots = [null, null, null, null, null];
-let selectedSlotIndex = 0; // Kolom yang sedang aktif dipilih oleh siswa (0 s/d 4)
+let selectedSlotIndex = 0;
 
 const targetColorPool = [
     { hex: "#8B0000", name: "Merah Tua / Marun" },
@@ -168,9 +168,10 @@ function loadStudentTurn() {
     document.getElementById('target-color-name').textContent = currentSoalObj.name;
 
     currentSlots = [null, null, null, null, null];
-    selectedSlotIndex = 0; // Default pilih kolom pertama
+    selectedSlotIndex = 0;
     renderSlots();
     renderPaletteGrid();
+    updateMixedResultBox();
 
     timeLeft = 120;
     document.getElementById('timer').textContent = timeLeft;
@@ -185,7 +186,7 @@ function renderSlots() {
         const slot = document.createElement('div');
         slot.className = 'color-slot';
         if (idx === selectedSlotIndex) {
-            slot.classList.add('active-slot'); // Menandai kolom yang sedang dipilih
+            slot.classList.add('active-slot');
         }
         if (color) {
             slot.style.backgroundColor = color;
@@ -214,11 +215,10 @@ function renderPaletteGrid() {
 }
 
 function applyColorToSelectedSlot(color) {
-    // Memasukkan warna ke kolom yang sedang aktif dipilih
     currentSlots[selectedSlotIndex] = color;
     renderSlots();
+    updateMixedResultBox();
     
-    // Otomatis pindah ke kolom berikutnya jika belum di kolom terakhir
     if (selectedSlotIndex < 4) {
         selectedSlotIndex++;
         renderSlots();
@@ -229,6 +229,34 @@ function clearSlots() {
     currentSlots = [null, null, null, null, null];
     selectedSlotIndex = 0;
     renderSlots();
+    updateMixedResultBox();
+}
+
+function calculateMixedColor(slots) {
+    let rSum = 0, gSum = 0, bSum = 0, count = 0;
+    slots.forEach(hex => {
+        if (hex !== null) {
+            let rgb = hexToRgb(hex);
+            rSum += rgb.r;
+            gSum += rgb.g;
+            bSum += rgb.b;
+            count++;
+        }
+    });
+
+    if (count === 0) return "#FFFFFF";
+
+    let avgR = Math.round(rSum / count);
+    let avgG = Math.round(gSum / count);
+    let avgB = Math.round(bSum / count);
+
+    return `rgb(${avgR}, ${avgG}, ${avgB})`;
+}
+
+function updateMixedResultBox() {
+    const resultBox = document.getElementById('mixed-result-box');
+    let mixedRgbStyle = calculateMixedColor(currentSlots);
+    resultBox.style.backgroundColor = mixedRgbStyle;
 }
 
 function startTimer() {
@@ -349,6 +377,7 @@ function hexToRgb(hex) {
     return {r, g, b};
 }
 
+// SISTEM PENILAIAN DIPERKETAT & AKURAT (0% - 100%)
 function calculateColorScore(slots, targetHex) {
     const target = hexToRgb(targetHex);
     let rSum = 0, gSum = 0, bSum = 0, validCount = 0;
@@ -369,15 +398,19 @@ function calculateColorScore(slots, targetHex) {
     let avgG = gSum / validCount;
     let avgB = bSum / validCount;
 
+    // Hitung jarak Euclidean 3D warna
     let distance = Math.sqrt(
         Math.pow(target.r - avgR, 2) +
         Math.pow(target.g - avgG, 2) +
         Math.pow(target.b - avgB, 2)
     );
 
-    let maxDistance = 441.6;
-    let score = Math.max(0, Math.round(100 - (distance / maxDistance) * 100));
-    return score;
+    let maxDistance = 441.6; // Akar dari (255^2 + 255^2 + 255^2)
+    
+    // Perhitungan diperketat (kuadratik) agar jika melenceng jauh nilainya turun drastis ke 0%
+    let rawScore = Math.max(0, 100 * (1 - Math.pow(distance / maxDistance, 1.5)));
+    
+    return Math.round(rawScore);
 }
 
 function renderSidebarList() {
