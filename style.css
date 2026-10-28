@@ -239,7 +239,6 @@ body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-/* LAYOUT KOTAK HASIL CAMPURAN DI SEBELAH KANAN */
 .mixing-result-wrapper {
     display: flex;
     align-items: center;
@@ -307,7 +306,7 @@ body {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
     gap: 8px;
-    max-width: 420px;
+    max-width: 450px;
 }
 
 .palette-item {
