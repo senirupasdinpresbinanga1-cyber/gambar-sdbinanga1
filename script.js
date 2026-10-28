@@ -12,6 +12,7 @@ let currentSoalObj = null;
 let currentSlots = [null, null, null, null, null];
 let selectedSlotIndex = 0;
 
+// 26 SOAL WARNA TARGET
 const targetColorPool = [
     { hex: "#8B0000", name: "Merah Tua / Marun" },
     { hex: "#FF4500", name: "Oranye Kemerahan" },
@@ -41,11 +42,16 @@ const targetColorPool = [
     { hex: "#9932CC", name: "Ungu Tua / Magenta Keunguan" }
 ];
 
+// PALET BANYAK WARNA (DILENGKAPI SEMUA WARNA TARGET AGAR TERSEDIA DI PILIHAN)
 const availablePalette = [
     "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", 
     "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", 
     "#008080", "#808080", "#A52A2A", "#FFC0CB", "#4682B4",
-    "#D2B48C", "#8B0000", "#556B2F", "#483D8B", "#FF1493"
+    "#D2B48C", "#8B0000", "#556B2F", "#483D8B", "#FF1493",
+    "#FF4500", "#FFD700", "#ADFF2F", "#008000", "#00008B",
+    "#8A2BE2", "#A0522D", "#2F4F4F", "#FF8C00", "#9ACD32",
+    "#20B2AA", "#778899", "#B0C4DE", "#DB7093", "#CD853F",
+    "#6B8E23", "#9932CC"
 ];
 
 function selectClass(className) {
@@ -316,22 +322,26 @@ function closeTurnAlert() {
     loadStudentTurn();
 }
 
+// SKIP SISWA TANPA KONFIRMASI POPUP
 function skipCurrentStudent() {
-    if (confirm("Yakin ingin men-skip siswa ini (tidak hadir)?")) {
-        clearInterval(countdown);
-        const student = studentsList[currentIndex];
-        student.skipped = true;
-        studentResults[student.name] = { score: "0%", status: "Tidak Hadir (Skipped)" };
-        saveStudentScoreToDatabase(student, "0%", "Tidak Hadir (Skipped)");
+    clearInterval(countdown);
+    const student = studentsList[currentIndex];
+    student.skipped = true;
+    studentResults[student.name] = { score: "0%", status: "Tidak Hadir (Skipped)" };
+    saveStudentScoreToDatabase(student, "0%", "Tidak Hadir (Skipped)");
 
-        const nextIndex = getNextValidIndex(currentIndex + 1);
-        if (nextIndex < studentsList.length) {
-            currentIndex++;
-            loadStudentTurn();
-        } else {
-            endAllTurns();
-        }
+    const nextIndex = getNextValidIndex(currentIndex + 1);
+    if (nextIndex < studentsList.length) {
+        currentIndex++;
+        loadStudentTurn();
+    } else {
+        endAllTurns();
     }
+}
+
+// RESET / STOP SESI TANPA KONFIRMASI POPUP
+function confirmStop() {
+    location.reload();
 }
 
 function saveStudentScoreToDatabase(student, scoreVal, statusVal) {
@@ -377,7 +387,7 @@ function hexToRgb(hex) {
     return {r, g, b};
 }
 
-// SISTEM PENILAIAN DIPERKETAT & AKURAT (0% - 100%)
+// SISTEM PENILAIAN 10% PER KOLOM & SANGAT AKURAT
 function calculateColorScore(slots, targetHex) {
     const target = hexToRgb(targetHex);
     let rSum = 0, gSum = 0, bSum = 0, validCount = 0;
@@ -407,10 +417,15 @@ function calculateColorScore(slots, targetHex) {
 
     let maxDistance = 441.6; // Akar dari (255^2 + 255^2 + 255^2)
     
-    // Perhitungan diperketat (kuadratik) agar jika melenceng jauh nilainya turun drastis ke 0%
-    let rawScore = Math.max(0, 100 * (1 - Math.pow(distance / maxDistance, 1.5)));
+    // Perhitungan diperketat dengan eksponen pangkat 2.2 agar jika warna melenceng nilai langsung turun drastis
+    let accuracyRatio = Math.max(0, 1 - Math.pow(distance / maxDistance, 2.2));
     
-    return Math.round(rawScore);
+    // Faktor pengali kolom: setiap kolom menyumbang 20% (total 5 kolom = 100%)
+    // Jika ada kolom kosong, nilai maksimum terpotong secara proporsional
+    let fillingMultiplier = (validCount / 5);
+
+    let finalScore = Math.round(accuracyRatio * fillingMultiplier * 100);
+    return Math.min(100, Math.max(0, finalScore));
 }
 
 function renderSidebarList() {
@@ -466,12 +481,6 @@ document.getElementById('restart-btn').onclick = () => {
     document.getElementById('setup-panel').classList.remove('hidden');
     fetchStudentsFromDatabase();
 };
-
-function confirmStop() {
-    if (confirm("Yakin ingin mereset seluruh sesi permainan?")) {
-        location.reload();
-    }
-}
 
 document.addEventListener('fullscreenchange', () => {
     if (isGameActive && !document.fullscreenElement) {
