@@ -65,8 +65,8 @@
 
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`.</li>
-                        <li>🎨 <strong>Pencampuran Presisi:</strong> Gabungan 5 kolom warna akan menghasilkan 1 warna di kotak hasil sebelah kanan untuk dibandingkan dengan target.</li>
-                        <li>⚡ <strong>Real-time Sync:</strong> Nilai (0% - 100%) langsung tersimpan otomatis begitu siswa selesai.</li>
+                        <li>🎨 <strong>Bobot 10% per Kolom:</strong> Setiap kolom yang terisi memberikan kontribusi maksimal 20% (total 100%). Kolom kosong memotong nilai.</li>
+                        <li>⚡ <strong>Real-time Sync & Tanpa Jeda:</strong> Tombol skip dan reset bekerja instan tanpa keluar dari mode layar penuh.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan (Fullscreen)</button>
                 </div>
@@ -94,7 +94,6 @@
                         <div id="target-color-box" class="color-box-large"></div>
                     </div>
 
-                    <!-- AREA MIXING & KOTAK HASIL DI SEBELAH KANAN -->
                     <div class="mixing-result-wrapper">
                         <div class="mixing-workspace">
                             <span class="box-label">🧪 5 Kolom Warna Campuran:</span>
@@ -110,7 +109,7 @@
                     </div>
 
                     <div class="palette-pool-box">
-                        <span class="box-label">🎨 Palet Banyak Warna (Klik untuk mengisi kolom yang dipilih):</span>
+                        <span class="box-label">🎨 Palet Banyak Warna (Lengkap dengan warna target):</span>
                         <div id="color-palette-grid" class="palette-grid"></div>
                     </div>
                 </div>
