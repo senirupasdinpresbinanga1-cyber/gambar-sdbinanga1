@@ -11,7 +11,6 @@
 <body>
     <div class="fullscreen-bg"></div>
 
-    <!-- OVERLAY PERINGATAN ANTI-CHEAT -->
     <div id="warning-overlay" class="full-overlay" style="display: none;">
         <div class="card warning-card">
             <h2 style="margin-bottom: 12px; color: #dc3545; font-size: 24px;"><i class="fas fa-exclamation-triangle"></i> PERINGATAN!</h2>
@@ -20,7 +19,6 @@
         </div>
     </div>
 
-    <!-- OVERLAY WAKTU HABIS -->
     <div id="timeup-overlay" class="full-overlay" style="display: none;">
         <div class="card timeup-card">
             <h2 style="margin-bottom: 10px; color: #f59e0b; font-size: 24px;"><i class="fas fa-hourglass-end"></i> Waktu Habis!</h2>
@@ -29,7 +27,6 @@
         </div>
     </div>
 
-    <!-- OVERLAY NOTIFIKASI GILIRAN -->
     <div id="turn-alert-overlay" class="full-overlay" style="display: none;">
         <div class="card warning-card" style="border-top: 5px solid #38bdf8;">
             <h2 id="turn-alert-title" style="margin-bottom: 12px; color: #0284c7; font-size: 22px;"><i class="fas fa-user-clock"></i> Giliran Berikutnya</h2>
@@ -65,8 +62,8 @@
 
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`.</li>
-                        <li>🎨 <strong>Bobot 10% per Kolom:</strong> Setiap kolom yang terisi memberikan kontribusi maksimal 20% (total 100%). Kolom kosong memotong nilai.</li>
-                        <li>⚡ <strong>Real-time Sync & Tanpa Jeda:</strong> Tombol skip dan reset bekerja instan tanpa keluar dari mode layar penuh.</li>
+                        <li>⚠️ <strong>Aturan Kolom Penuh:</strong> Ke-5 kolom wajib terisi penuh. Jika ada 1 kolom saja yang kosong, nilai otomatis 0%.</li>
+                        <li>🎯 <strong>Penilaian Presisi:</strong> Sistem penilaian diperketat mutlak; salah warna jauh langsung bernilai 0%.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan (Fullscreen)</button>
                 </div>
@@ -96,7 +93,7 @@
 
                     <div class="mixing-result-wrapper">
                         <div class="mixing-workspace">
-                            <span class="box-label">🧪 5 Kolom Warna Campuran:</span>
+                            <span class="box-label">🧪 5 Kolom Wajib Terisi Penuh:</span>
                             <div class="selected-slots-group" id="selected-slots"></div>
                         </div>
 
@@ -109,7 +106,7 @@
                     </div>
 
                     <div class="palette-pool-box">
-                        <span class="box-label">🎨 Palet Banyak Warna (Lengkap dengan warna target):</span>
+                        <span class="box-label">🎨 Palet Banyak Warna:</span>
                         <div id="color-palette-grid" class="palette-grid"></div>
                     </div>
                 </div>
@@ -126,7 +123,7 @@
 
             <div id="finish-panel" class="glass-card hidden">
                 <h2>🏆 Laporan Hasil Sesi</h2>
-                <p id="sync-status-msg" style="color: #38bdf8; font-size: 13px; margin-bottom: 15px;">Semua nilai siswa telah berhasil dikirim ke Google Spreadsheet secara real-time.</p>
+                <p id="sync-status-msg" style="color: #38bdf8; font-size: 13px; margin-bottom: 15px;">Semua nilai siswa telah berhasil diperbarui ke Google Spreadsheet secara real-time.</p>
                 
                 <div class="result-table-wrapper">
                     <table class="result-table" id="result-table-element">
