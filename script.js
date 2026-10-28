@@ -12,7 +12,6 @@ let currentSoalObj = null;
 let currentSlots = [null, null, null, null, null];
 let selectedSlotIndex = 0;
 
-// 26 SOAL WARNA TARGET
 const targetColorPool = [
     { hex: "#8B0000", name: "Merah Tua / Marun" },
     { hex: "#FF4500", name: "Oranye Kemerahan" },
@@ -42,7 +41,6 @@ const targetColorPool = [
     { hex: "#9932CC", name: "Ungu Tua / Magenta Keunguan" }
 ];
 
-// PALET BANYAK WARNA (DILENGKAPI SEMUA WARNA TARGET AGAR TERSEDIA DI PILIHAN)
 const availablePalette = [
     "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", 
     "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", 
@@ -322,7 +320,6 @@ function closeTurnAlert() {
     loadStudentTurn();
 }
 
-// SKIP SISWA TANPA KONFIRMASI POPUP
 function skipCurrentStudent() {
     clearInterval(countdown);
     const student = studentsList[currentIndex];
@@ -339,7 +336,6 @@ function skipCurrentStudent() {
     }
 }
 
-// RESET / STOP SESI TANPA KONFIRMASI POPUP
 function confirmStop() {
     location.reload();
 }
@@ -365,7 +361,7 @@ function saveStudentScoreToDatabase(student, scoreVal, statusVal) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         }).then(() => {
-            console.log(`Nilai ${student.name} berhasil dikirim ke database.`);
+            console.log(`Nilai ${student.name} berhasil diperbarui di database.`);
         }).catch(err => {
             console.error("Gagal kirim nilai:", err);
         });
@@ -387,26 +383,31 @@ function hexToRgb(hex) {
     return {r, g, b};
 }
 
-// SISTEM PENILAIAN 10% PER KOLOM & SANGAT AKURAT
+// SISTEM PENILAIAN 100% AKURAT & WAJIB 5 KOLOM TERISI PENUH
 function calculateColorScore(slots, targetHex) {
-    const target = hexToRgb(targetHex);
-    let rSum = 0, gSum = 0, bSum = 0, validCount = 0;
-
+    // Cek apakah ada kolom yang kosong (null). Jika ada 1 saja yang kosong, langsung return 0%
+    let validCount = 0;
     slots.forEach(hex => {
-        if(hex !== null) {
-            let rgb = hexToRgb(hex);
-            rSum += rgb.r;
-            gSum += rgb.g;
-            bSum += rgb.b;
-            validCount++;
-        }
+        if (hex !== null) validCount++;
     });
 
-    if(validCount === 0) return 0;
+    if (validCount < 5) {
+        return 0; // Wajib terisi 5 kolom penuh, jika tidak maka 0%
+    }
 
-    let avgR = rSum / validCount;
-    let avgG = gSum / validCount;
-    let avgB = bSum / validCount;
+    const target = hexToRgb(targetHex);
+    let rSum = 0, gSum = 0, bSum = 0;
+
+    slots.forEach(hex => {
+        let rgb = hexToRgb(hex);
+        rSum += rgb.r;
+        gSum += rgb.g;
+        bSum += rgb.b;
+    });
+
+    let avgR = rSum / 5;
+    let avgG = gSum / 5;
+    let avgB = bSum / 5;
 
     // Hitung jarak Euclidean 3D warna
     let distance = Math.sqrt(
@@ -417,14 +418,10 @@ function calculateColorScore(slots, targetHex) {
 
     let maxDistance = 441.6; // Akar dari (255^2 + 255^2 + 255^2)
     
-    // Perhitungan diperketat dengan eksponen pangkat 2.2 agar jika warna melenceng nilai langsung turun drastis
-    let accuracyRatio = Math.max(0, 1 - Math.pow(distance / maxDistance, 2.2));
+    // Perhitungan diperketat drastis dengan pangkat 3.5 agar yang melenceng jauh (seperti hitam vs oranye) mutlak jadi 0%
+    let accuracyRatio = Math.max(0, 1 - Math.pow(distance / maxDistance, 3.5));
     
-    // Faktor pengali kolom: setiap kolom menyumbang 20% (total 5 kolom = 100%)
-    // Jika ada kolom kosong, nilai maksimum terpotong secara proporsional
-    let fillingMultiplier = (validCount / 5);
-
-    let finalScore = Math.round(accuracyRatio * fillingMultiplier * 100);
+    let finalScore = Math.round(accuracyRatio * 100);
     return Math.min(100, Math.max(0, finalScore));
 }
 
@@ -458,7 +455,7 @@ function endAllTurns() {
     document.getElementById('finish-panel').classList.remove('hidden');
     renderSidebarList();
 
-    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh nilai siswa telah dikirim secara real-time ke Google Spreadsheet (Sheet Data_${selectedClass}).`;
+    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh nilai siswa telah diperbarui secara real-time di Google Spreadsheet (Sheet Data_${selectedClass}).`;
 
     const tbody = document.getElementById('result-table-body');
     tbody.innerHTML = '';
