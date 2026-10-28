@@ -1,22 +1,25 @@
 // === MASUKKAN URL WEB APP GS ANDA DI SINI ===
-const GS_WEB_APP_URL = "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI";
+const GS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGD2akVdn5TdycTWbHvoNuLQBDWaPzIkJCY2wLgD4JvN5F47qpaOqVVyqSJWDnqtCcbA/exec";
 
-// DATA SISWA KELAS 6A & 6B
-const studentsDataByClass = {
-    "6A": [
-        "ABID AQILAH WAHYUDI", "AHMAD FAREL", "AULIA ZAHRA", "DAFA PRATAMA", "DIAN ANGRAENI"
-    ],
-    "6B": [
-        "ANNISA RAMADANI", "BINTANG SAPUTRA", "CINTA LESTARI", "DIMAS ARYA", "FAHRI ALFARIZI"
-    ]
-};
+let selectedClass = "6A";
+let studentsList = [];
+let studentResults = {};
+let currentIndex = 0;
+let countdown;
+let timeLeft = 120;
+let isGameActive = false;
 
-// 26 SOAL WARNA TARGET DENGAN KETERANGAN DETAIL LENGKAP
+let currentSoalObj = null;
+let currentSlots = ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"];
+let historySteps = [];
+let historyStepIndex = -1;
+
+// 26 SOAL WARNA TARGET DENGAN KETERANGAN DETAIL
 const targetColorPool = [
     { hex: "#8B0000", name: "Merah Tua / Marun" },
     { hex: "#FF4500", name: "Oranye Kemerahan" },
     { hex: "#FFD700", name: "Kuning Keemasan" },
-    { hex: "#ADFF2F", name: "Hijaumuda / Hijau Kekuningan" },
+    { hex: "#ADFF2F", name: "Hijau Kekuningan" },
     { hex: "#008000", name: "Hijau Murni" },
     { hex: "#00FFFF", name: "Biru Muda / Sian" },
     { hex: "#1E90FF", name: "Biru Cerah" },
@@ -41,54 +44,13 @@ const targetColorPool = [
     { hex: "#9932CC", name: "Ungu Tua / Magenta Keunguan" }
 ];
 
-// PALET WARNA DASAR PEMBENTUK UNTUK DICAMPUR
+// PALET BANYAK WARNA
 const availablePalette = [
     "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", 
     "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", 
-    "#008080", "#808080", "#A52A2A", "#FFC0CB", "#4682B4"
+    "#008080", "#808080", "#A52A2A", "#FFC0CB", "#4682B4",
+    "#D2B48C", "#8B0000", "#556B2F", "#483D8B", "#FF1493"
 ];
-
-let selectedClass = "6A";
-let studentsList = [];
-let studentResults = {};
-let currentIndex = 0;
-let countdown;
-let timeLeft = 120;
-let isGameActive = false;
-
-let currentSoalObj = null;
-let currentSlots = ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"];
-let historySteps = [];
-let historyStepIndex = -1;
-
-const setupPanel = document.getElementById('setup-panel');
-const gamePanel = document.getElementById('game-panel');
-const finishPanel = document.getElementById('finish-panel');
-const startBtn = document.getElementById('start-btn');
-const currentPlayerEl = document.getElementById('current-player');
-const timerEl = document.getElementById('timer');
-const warningOverlay = document.getElementById('warning-overlay');
-const timeupOverlay = document.getElementById('timeup-overlay');
-const timeupMessage = document.getElementById('timeup-message');
-const turnAlertOverlay = document.getElementById('turn-alert-overlay');
-const studentListEl = document.getElementById('student-list');
-const sidebarCountEl = document.getElementById('sidebar-count');
-const sidebarClassLabel = document.getElementById('sidebar-class-label');
-const headerClassBadge = document.getElementById('header-class-badge');
-const targetColorBox = document.getElementById('target-color-box');
-const targetColorName = document.getElementById('target-color-name');
-const selectedSlotsContainer = document.getElementById('selected-slots');
-const colorPaletteGrid = document.getElementById('color-palette-grid');
-const targetSoalBadge = document.getElementById('target-soal-badge');
-
-function shuffleArray(array) {
-    let arr = [...array];
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
 
 function selectClass(className) {
     selectedClass = className;
@@ -99,15 +61,37 @@ function selectClass(className) {
             btn.classList.remove('active');
         }
     });
-    initClassPreview();
+    fetchStudentsFromDatabase();
 }
 
-function initClassPreview() {
-    const rawNames = studentsDataByClass[selectedClass];
-    sidebarCountEl.textContent = rawNames.length;
-    sidebarClassLabel.textContent = `Kelas ${selectedClass} - Warna`;
-    headerClassBadge.textContent = `Kelas ${selectedClass}`;
+async function fetchStudentsFromDatabase() {
+    const sidebarCountEl = document.getElementById('sidebar-count');
+    const sidebarClassLabel = document.getElementById('sidebar-class-label');
+    const studentListEl = document.getElementById('student-list');
+    const headerClassBadge = document.getElementById('header-class-badge');
 
+    headerClassBadge.textContent = `Kelas ${selectedClass}`;
+    sidebarClassLabel.textContent = `Kelas ${selectedClass} (Database)`;
+
+    if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
+        try {
+            let response = await fetch(`${GS_WEB_APP_URL}?action=getStudents&kelas=${selectedClass}`);
+            let names = await response.json();
+            setupStudentUI(names);
+        } catch (e) {
+            console.error("Gagal ambil dari database:", e);
+            setupStudentUI(["SISWA 1", "SISWA 2"]);
+        }
+    } else {
+        setupStudentUI(["SISWA CONTOH 1", "SISWA CONTOH 2"]);
+    }
+}
+
+function setupStudentUI(rawNames) {
+    const sidebarCountEl = document.getElementById('sidebar-count');
+    const studentListEl = document.getElementById('student-list');
+
+    sidebarCountEl.textContent = rawNames.length;
     studentListEl.innerHTML = '';
     rawNames.forEach((name, idx) => {
         const li = document.createElement('li');
@@ -118,19 +102,37 @@ function initClassPreview() {
         `;
         studentListEl.appendChild(li);
     });
+
+    window.rawDatabaseNames = rawNames;
 }
 
-initClassPreview();
-startBtn.addEventListener('click', startEntireGame);
+// Inisialisasi awal
+fetchStudentsFromDatabase();
+
+document.getElementById('start-btn').addEventListener('click', startEntireGame);
+
+function shuffleArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
 
 function startEntireGame() {
     var elem = document.documentElement;
     if (elem.requestFullscreen) { elem.requestFullscreen().catch(()=>{}); }
 
-    const rawNames = studentsDataByClass[selectedClass];
+    let names = window.rawDatabaseNames || [];
+    if(names.length === 0) {
+        alert("Daftar siswa kosong atau gagal dimuat dari database!");
+        return;
+    }
+
     const shuffledSoal = shuffleArray(targetColorPool);
 
-    studentsList = rawNames.map((name, idx) => {
+    studentsList = names.map((name, idx) => {
         let soal = shuffledSoal[idx % shuffledSoal.length];
         return { 
             name: name, 
@@ -144,9 +146,9 @@ function startEntireGame() {
     studentResults = {};
     isGameActive = true;
     
-    setupPanel.classList.add('hidden');
-    finishPanel.classList.add('hidden');
-    gamePanel.classList.remove('hidden');
+    document.getElementById('setup-panel').classList.add('hidden');
+    document.getElementById('finish-panel').classList.add('hidden');
+    document.getElementById('game-panel').classList.remove('hidden');
     
     loadStudentTurn();
 }
@@ -165,12 +167,12 @@ function loadStudentTurn() {
         return;
     }
 
-    currentPlayerEl.textContent = currentStudent.name;
-    targetSoalBadge.textContent = `Soal ${currentStudent.soalNo} / 26`;
+    document.getElementById('current-player').textContent = currentStudent.name;
+    document.getElementById('target-soal-badge').textContent = `Soal ${currentStudent.soalNo} / 26`;
     currentSoalObj = currentStudent.targetSoal;
     
-    targetColorBox.style.backgroundColor = currentSoalObj.hex;
-    targetColorName.textContent = currentSoalObj.name;
+    document.getElementById('target-color-box').style.backgroundColor = currentSoalObj.hex;
+    document.getElementById('target-color-name').textContent = currentSoalObj.name;
 
     currentSlots = ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"];
     renderSlots();
@@ -181,35 +183,37 @@ function loadStudentTurn() {
     saveSlotState();
 
     timeLeft = 120;
-    timerEl.textContent = timeLeft;
+    document.getElementById('timer').textContent = timeLeft;
     startTimer();
     renderSidebarList();
 }
 
 function renderSlots() {
-    selectedSlotsContainer.innerHTML = '';
+    const container = document.getElementById('selected-slots');
+    container.innerHTML = '';
     currentSlots.forEach((color, idx) => {
         const slot = document.createElement('div');
         slot.className = 'color-slot';
         slot.style.backgroundColor = color;
-        slot.title = `Klik untuk bersihkan slot ${idx+1}`;
+        slot.title = `Slot ${idx+1} (Klik untuk kosongkan)`;
         slot.onclick = () => {
             currentSlots[idx] = "#FFFFFF";
             renderSlots();
             saveSlotState();
         };
-        selectedSlotsContainer.appendChild(slot);
+        container.appendChild(slot);
     });
 }
 
 function renderPaletteGrid() {
-    colorPaletteGrid.innerHTML = '';
+    const grid = document.getElementById('color-palette-grid');
+    grid.innerHTML = '';
     availablePalette.forEach(color => {
         const item = document.createElement('div');
         item.className = 'palette-item';
         item.style.backgroundColor = color;
         item.onclick = () => applyColorToNextSlot(color);
-        colorPaletteGrid.appendChild(item);
+        grid.appendChild(item);
     });
 }
 
@@ -258,7 +262,7 @@ function startTimer() {
     clearInterval(countdown);
     countdown = setInterval(() => {
         timeLeft--;
-        timerEl.textContent = timeLeft;
+        document.getElementById('timer').textContent = timeLeft;
         if (timeLeft <= 0) {
             clearInterval(countdown);
             handleTimeUp();
@@ -274,15 +278,15 @@ function handleTimeUp() {
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
-        timeupMessage.innerHTML = `Waktu habis!<br>Selanjutnya giliran: <strong style="color:#38bdf8;">${studentsList[nextIndex].name}</strong>`;
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Selanjutnya giliran: <strong style="color:#38bdf8;">${studentsList[nextIndex].name}</strong>`;
     } else {
-        timeupMessage.innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
     }
-    timeupOverlay.style.display = 'flex';
+    document.getElementById('timeup-overlay').style.display = 'flex';
 }
 
 function proceedNextAfterTimeUp() {
-    timeupOverlay.style.display = 'none';
+    document.getElementById('timeup-overlay').style.display = 'none';
     currentIndex++;
     loadStudentTurn();
 }
@@ -297,20 +301,20 @@ function triggerSelesaiButton() {
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
         document.getElementById('turn-alert-msg').textContent = `Selanjutnya giliran ${studentsList[nextIndex].name}`;
-        turnAlertOverlay.style.display = 'flex';
+        document.getElementById('turn-alert-overlay').style.display = 'flex';
     } else {
         endAllTurns();
     }
 }
 
 function closeTurnAlert() {
-    turnAlertOverlay.style.display = 'none';
+    document.getElementById('turn-alert-overlay').style.display = 'none';
     currentIndex++;
     loadStudentTurn();
 }
 
 function skipCurrentStudent() {
-    if (confirm("Yakin ingin men-skip siswa ini (tidak hadir)? Nilai tidak akan masuk.")) {
+    if (confirm("Yakin ingin men-skip siswa ini (tidak hadir)?")) {
         clearInterval(countdown);
         const student = studentsList[currentIndex];
         student.skipped = true;
@@ -373,6 +377,7 @@ function calculateColorScore(slots, targetHex) {
 }
 
 function renderSidebarList() {
+    const studentListEl = document.getElementById('student-list');
     studentListEl.innerHTML = '';
     studentsList.forEach((stu, idx) => {
         const li = document.createElement('li');
@@ -397,15 +402,19 @@ function renderSidebarList() {
 }
 
 function endAllTurns() {
-    gamePanel.classList.add('hidden');
-    finishPanel.classList.remove('hidden');
+    document.getElementById('game-panel').classList.add('hidden');
+    document.getElementById('finish-panel').classList.remove('hidden');
     renderSidebarList();
 
-    let spreadsheetPayload = [];
+    let spreadsheetPayload = {
+        kelas: selectedClass,
+        results: []
+    };
+
     studentsList.forEach(stu => {
         let res = studentResults[stu.name] || { score: "0%", status: "Belum" };
         if(!stu.skipped) {
-            spreadsheetPayload.push({
+            spreadsheetPayload.results.push({
                 nama: stu.name,
                 soalWarna: stu.targetSoal.name,
                 nilai: res.score,
@@ -414,7 +423,6 @@ function endAllTurns() {
         }
     });
 
-    // Kirim Data Nilai ke Google Apps Script Spreadsheet
     const syncStatusMsg = document.getElementById('sync-status-msg');
     if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
         fetch(GS_WEB_APP_URL, {
@@ -424,19 +432,18 @@ function endAllTurns() {
             body: JSON.stringify(spreadsheetPayload)
         })
         .then(() => {
-            syncStatusMsg.textContent = "✅ Data Nilai Berhasil Tersimpan di Google Spreadsheet (Sheet: Data_Nilai)!";
+            syncStatusMsg.textContent = `✅ Data Nilai Berhasil Tersimpan di Sheet Data_${selectedClass}!`;
             syncStatusMsg.style.color = "#10b981";
         })
         .catch(err => {
-            syncStatusMsg.textContent = "⚠️ Gagal Sinkronisasi ke Spreadsheet: " + err;
+            syncStatusMsg.textContent = "⚠️ Gagal Sinkronisasi: " + err;
             syncStatusMsg.style.color = "#ef4444";
         });
     } else {
-        syncStatusMsg.textContent = "⚠️ URL Web App GS belum dikonfigurasi pada script.js!";
+        syncStatusMsg.textContent = "⚠️ URL Web App GS belum diatur di script.js!";
         syncStatusMsg.style.color = "#f59e0b";
     }
 
-    // Tampilkan Tabel Rekap di Layar
     const tbody = document.getElementById('result-table-body');
     tbody.innerHTML = '';
     studentsList.forEach((stu, idx) => {
@@ -454,9 +461,9 @@ function endAllTurns() {
 }
 
 document.getElementById('restart-btn').onclick = () => {
-    finishPanel.classList.add('hidden');
-    setupPanel.classList.remove('hidden');
-    initClassPreview();
+    document.getElementById('finish-panel').classList.add('hidden');
+    document.getElementById('setup-panel').classList.remove('hidden');
+    fetchStudentsFromDatabase();
 };
 
 function confirmStop() {
@@ -464,11 +471,10 @@ function confirmStop() {
         location.reload();
     }
 }
-document.getElementById('stop-btn').onclick = confirmStop;
 
 document.addEventListener('fullscreenchange', () => {
     if (isGameActive && !document.fullscreenElement) {
-        warningOverlay.style.display = 'flex';
+        document.getElementById('warning-overlay').style.display = 'flex';
         clearInterval(countdown);
     }
 });
@@ -476,6 +482,6 @@ document.addEventListener('fullscreenchange', () => {
 function returnToFullscreen() {
     var elem = document.documentElement;
     if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
-    warningOverlay.style.display = 'none';
+    document.getElementById('warning-overlay').style.display = 'none';
     startTimer();
 }
