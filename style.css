@@ -250,7 +250,6 @@ body {
     width: 52px;
     height: 52px;
     border-radius: 8px;
-    background-color: #FFFFFF !important;
     border: 3px solid #000000;
     cursor: pointer;
     transition: transform 0.2s;
