@@ -62,8 +62,8 @@
 
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`.</li>
-                        <li>⚠️ <strong>Aturan Kolom Penuh:</strong> Ke-5 kolom wajib terisi penuh. Jika ada 1 kolom saja yang kosong, nilai otomatis 0%.</li>
-                        <li>🎯 <strong>Sistem Penilaian Mutlak:</strong> Menggunakan deteksi spektrum warna (Hue & RGB Proximity). Salah keluarga warna (misal target hijau diisi hitam) langsung bernilai rendah (25% atau ke bawah).</li>
+                        <li>🔲 <strong>Background Transparan:</strong> Kolom slot dan hasil berlatar belakang transparan (bisa diisi warna putih atau warna lainnya dari palet).</li>
+                        <li>⚡ <strong>Real-time Sync:</strong> Nilai langsung tersimpan otomatis per siswa.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan (Fullscreen)</button>
                 </div>
@@ -101,12 +101,12 @@
 
                         <div class="result-display-box">
                             <span class="box-label">✨ Hasil Campuran:</span>
-                            <div id="mixed-result-box" class="color-box-result"></div>
+                            <div id="mixed-result-box" class="color-box-result transparent-bg"></div>
                         </div>
                     </div>
 
                     <div class="palette-pool-box">
-                        <span class="box-label">🎨 Palet Banyak Warna:</span>
+                        <span class="box-label">🎨 Palet Banyak Warna (Termasuk Putih):</span>
                         <div id="color-palette-grid" class="palette-grid"></div>
                     </div>
                 </div>
