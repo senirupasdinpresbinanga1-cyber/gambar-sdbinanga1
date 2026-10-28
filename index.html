@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seni Rupa - Tantangan Menggambar Kelas & Paket</title>
+    <title>Seni Rupa - Tantangan Pencampuran Warna Kelas</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,7 +16,6 @@
         <div class="card warning-card">
             <h2 style="margin-bottom: 12px; color: #dc3545; font-size: 24px;"><i class="fas fa-exclamation-triangle"></i> PERINGATAN!</h2>
             <p style="color: #1e293b; font-size: 15px; font-weight: 700; margin-bottom: 10px;">Anda terdeteksi keluar dari layar penuh / berpindah aplikasi.</p>
-            <p style="color: #64748b; font-size: 13px; margin-bottom: 20px;">Sistem mewajibkan layar penuh selama sesi berlangsung.</p>
             <button class="btn btn-danger" onclick="returnToFullscreen()" style="width: 100%; padding: 12px;"><i class="fas fa-compress"></i> Kembali ke Layar Penuh</button>
         </div>
     </div>
@@ -25,8 +24,17 @@
     <div id="timeup-overlay" class="full-overlay" style="display: none;">
         <div class="card timeup-card">
             <h2 style="margin-bottom: 10px; color: #f59e0b; font-size: 24px;"><i class="fas fa-hourglass-end"></i> Waktu Habis!</h2>
-            <p id="timeup-message" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Waktu menggambar telah selesai.</p>
+            <p id="timeup-message" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Waktu pencampuran warna telah selesai.</p>
             <button class="btn btn-glow" onclick="proceedNextAfterTimeUp()" style="width: 100%; padding: 12px; font-size: 16px;">Lanjutkan <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- OVERLAY NOTIFIKASI GILIRAN -->
+    <div id="turn-alert-overlay" class="full-overlay" style="display: none;">
+        <div class="card warning-card" style="border-top: 5px solid #38bdf8;">
+            <h2 id="turn-alert-title" style="margin-bottom: 12px; color: #0284c7; font-size: 22px;"><i class="fas fa-user-clock"></i> Giliran Berikutnya</h2>
+            <p id="turn-alert-msg" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Selanjutnya giliran (Nama siswa)</p>
+            <button class="btn btn-glow" onclick="closeTurnAlert()" style="width: 100%; padding: 12px; font-size: 16px;">Mulai Sesi <i class="fas fa-play"></i></button>
         </div>
     </div>
 
@@ -39,23 +47,20 @@
                 <h3><i class="fas fa-users"></i> Daftar Siswa (<span id="sidebar-count">0</span>)</h3>
                 <small id="sidebar-class-label">Pilih Kelas Terlebih Dahulu</small>
             </div>
-            <ul id="student-list" class="student-list">
-                <!-- Daftar siswa digenerate otomatis lewat JS -->
-            </ul>
+            <ul id="student-list" class="student-list"></ul>
         </aside>
 
         <!-- KONTEN UTAMA -->
         <main class="app-container">
-            <!-- HEADER -->
             <header class="app-header">
                 <h1>🎨 Seni Rupa <span id="header-class-badge" class="badge">Pilih Kelas</span></h1>
-                <p>Uji Ketepatan Garis & Presisi Menggambar (Sistem Pilihan Kelas & Paket Tema)</p>
+                <p>Tantangan Meracik & Mencampur 5 Warna Presisi</p>
             </header>
 
-            <!-- PANEL PEMILIHAN KELAS, PAKET & SETUP -->
+            <!-- PANEL SETUP -->
             <div id="setup-panel" class="glass-card">
                 <div class="setup-content">
-                    <h3>📜 Konfigurasi Sesi Menggambar</h3>
+                    <h3>📜 Konfigurasi Sesi Pencampuran Warna</h3>
                     
                     <label class="setup-label">1. Pilih Kelas:</label>
                     <div class="class-selector-group">
@@ -63,17 +68,11 @@
                         <button class="btn-class" data-class="6B" onclick="selectClass('6B')">🏫 Kelas 6B</button>
                     </div>
 
-                    <label class="setup-label">2. Pilih Paket Tema Gambar (10 Objek):</label>
-                    <div class="package-selector-group">
-                        <button class="btn-package active" data-package="sekolah" onclick="selectPackage('sekolah')">🎒 Perlengkapan Sekolah</button>
-                        <button class="btn-package" data-package="dapur" onclick="selectPackage('dapur')">🍳 Alat Dapur</button>
-                        <button class="btn-package" data-package="pemandangan" onclick="selectPackage('pemandangan')">🌄 Pemandangan</button>
-                    </div>
-
                     <ul class="rule-list">
-                        <li>🔀 <strong>Pengacakan Otomatis:</strong> Urutan siswa dan objek dari paket yang dipilih akan diacak otomatis.</li>
-                        <li>🎯 <strong>Penilaian Bonus:</strong> Berdasarkan penutupan garis kunci & efisiensi goresan klik kiri.</li>
-                        <li>↩️ <strong>Undo & Redo:</strong> Gunakan tombol <i class="fas fa-undo"></i> Undo (Ctrl+Z) / <i class="fas fa-redo"></i> Redo (Ctrl+Y).</li>
+                        <li>🎨 <strong>Sistem Campur 5 Warna:</strong> Siswa mencampur 5 slot warna untuk mendekati warna target pada soal.</li>
+                        <li>🔀 <strong>26 Soal Variatif:</strong> Setiap siswa mendapatkan warna target yang berbeda lengkap dengan keterangan detail warna.</li>
+                        <li>⏱️ <strong>Waktu 2 Menit:</strong> Waktu otomatis berjalan bergantian per siswa.</li>
+                        <li>📊 <strong>Auto-Sync Spreadsheet:</strong> Nilai & detail soal warna otomatis tersimpan ke Sheet `Data_Nilai`.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan (Fullscreen)</button>
                 </div>
@@ -85,70 +84,68 @@
                     <div class="info-item">
                         <span class="label">Pemain Saat Ini:</span>
                         <h2 id="current-player" class="highlight-name">-</h2>
-                        <span id="target-object-badge" class="target-badge">-</span>
+                        <span id="target-soal-badge" class="target-badge">Soal 1 / 26</span>
                     </div>
                     <div class="timer-display">
                         ⏳ Sisa Waktu: <span id="timer">120</span> dtk
                     </div>
                     <div class="action-top-group">
-                        <button id="stop-btn" class="btn btn-warning btn-sm"><i class="fas fa-stop"></i> Reset Sesi</button>
+                        <button id="skip-student-btn" class="btn btn-warning btn-sm" onclick="skipCurrentStudent()"><i class="fas fa-user-slash"></i> Skip Siswa (Tidak Hadir)</button>
+                        <button id="stop-btn" class="btn btn-danger btn-sm"><i class="fas fa-stop"></i> Reset Sesi</button>
                     </div>
                 </div>
 
-                <!-- Area Kanvas -->
-                <div class="canvas-wrapper">
-                    <canvas id="guideCanvas" width="720" height="440"></canvas>
-                    <canvas id="drawingCanvas" width="720" height="440"></canvas>
+                <!-- AREA TANTANGAN WARNA -->
+                <div class="color-game-container">
+                    <div class="target-display-box">
+                        <span class="box-label">🎯 Target Warna: <strong id="target-color-name" style="color:#38bdf8;">-</strong></span>
+                        <div id="target-color-box" class="color-box-large"></div>
+                    </div>
+
+                    <div class="mixing-workspace">
+                        <span class="box-label">🧪 Campuran 5 Warna Anda (Geser/Pilih Palet):</span>
+                        <div class="selected-slots-group" id="selected-slots"></div>
+                    </div>
+
+                    <div class="palette-pool-box">
+                        <span class="box-label">🎨 Palet Warna Tersedia:</span>
+                        <div id="color-palette-grid" class="palette-grid"></div>
+                    </div>
                 </div>
 
-                <!-- Kontrol Alat Gambar -->
+                <!-- KONTROL TOMBOL -->
                 <div class="tool-controls">
-                    <div class="tool-group">
-                        <label>Warna: <input type="color" id="colorPicker" value="#0f172a"></label>
-                        <label>Tebal: <input type="range" id="brushSize" min="3" max="15" value="6"></label>
-                    </div>
                     <div class="tool-group-history">
-                        <button id="undo-btn" class="btn btn-secondary btn-sm" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i> Undo</button>
-                        <button id="redo-btn" class="btn btn-secondary btn-sm" title="Redo (Ctrl+Y)"><i class="fas fa-redo"></i> Redo</button>
+                        <button id="undo-btn" class="btn btn-secondary btn-sm" onclick="undoColor()"><i class="fas fa-undo"></i> Undo</button>
+                        <button id="redo-btn" class="btn btn-secondary btn-sm" onclick="redoColor()"><i class="fas fa-redo"></i> Redo</button>
+                        <button id="clear-btn" class="btn btn-danger btn-sm" onclick="clearSlots()"><i class="fas fa-trash"></i> Bersihkan Slot</button>
                     </div>
                     <div class="action-group">
-                        <button id="eraser-btn" class="btn btn-secondary"><i class="fas fa-eraser"></i> Penghapus</button>
-                        <button id="clear-btn" class="btn btn-danger"><i class="fas fa-trash"></i> Bersihkan</button>
-                        <button id="next-turn-btn" class="btn btn-success"><i class="fas fa-arrow-right"></i> Selesai & Lanjut</button>
+                        <button id="next-turn-btn" class="btn btn-success" onclick="triggerSelesaiButton()"><i class="fas fa-arrow-right"></i> Selesai & Lanjut</button>
                     </div>
                 </div>
             </div>
 
-            <!-- PANEL SELESAI & HASIL AKURASI -->
+            <!-- PANEL SELESAI & HASIL -->
             <div id="finish-panel" class="glass-card hidden">
-                <h2>🏆 Laporan Analisis Hasil Karya Siswa</h2>
-                <p id="finish-subtitle" style="color: #94a3b8; font-size: 13px;">Hasil murni karya siswa tanpa garis panduan kunci jawaban.</p>
+                <h2>🏆 Laporan Hasil Akhir & Sinkronisasi Spreadsheet</h2>
+                <p id="sync-status-msg" style="color: #38bdf8; font-size: 13px; margin-bottom: 15px;">Mengirim data ke Google Spreadsheet...</p>
                 
-                <div class="result-container">
-                    <div class="canvas-result-box">
-                        <canvas id="resultCanvas" width="480" height="280"></canvas>
-                        <!-- NAMA SISWA DI BAWAH KERTAS -->
-                        <h3 id="result-student-name" class="student-result-title">-</h3>
-                    </div>
-                    <div class="score-box">
-                        <h4>🎯 Skor Bonus & Akurasi</h4>
-                        <div class="score-circle" id="score-circle">
-                            <span id="score-value">0</span><small>/100</small>
-                        </div>
-                        <p id="score-feedback" class="feedback-text">Menganalisis matriks piksel...</p>
-                        
-                        <div class="score-breakdown">
-                            <div class="breakdown-item">Penutupan Kunci: <span id="key-coverage">0%</span></div>
-                            <div class="breakdown-item">Efisiensi Goresan: <span id="stroke-efficiency">0%</span></div>
-                        </div>
-
-                        <div class="result-nav-buttons">
-                            <button id="prev-result-btn" class="btn btn-secondary">⬅️ Prev</button>
-                            <button id="next-result-btn" class="btn btn-primary">Next ➡️</button>
-                        </div>
-                        <button id="restart-btn" class="btn btn-glow" style="margin-top: 10px; width:100%;"><i class="fas fa-redo"></i> Pilih Kelas / Main Lagi</button>
-                    </div>
+                <div class="result-table-wrapper">
+                    <table class="result-table" id="result-table-element">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Siswa</th>
+                                <th>Soal Warna (Detail)</th>
+                                <th>Nilai Akurasi</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-table-body"></tbody>
+                    </table>
                 </div>
+                <button id="restart-btn" class="btn btn-glow" style="margin-top: 15px; width:100%;"><i class="fas fa-redo"></i> Ulangi Sesi / Ganti Kelas</button>
             </div>
         </main>
     </div>
