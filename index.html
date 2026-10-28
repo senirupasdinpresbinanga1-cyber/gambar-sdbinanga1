@@ -39,7 +39,6 @@
     </div>
 
     <div class="main-layout">
-        <!-- SIDEBAR DAFTAR SISWA -->
         <aside class="student-sidebar">
             <div class="sidebar-header">
                 <h3><i class="fas fa-users"></i> Daftar Siswa (<span id="sidebar-count">0</span>)</h3>
@@ -48,14 +47,12 @@
             <ul id="student-list" class="student-list"></ul>
         </aside>
 
-        <!-- KONTEN UTAMA -->
         <main class="app-container">
             <header class="app-header">
                 <h1>🎨 Seni Rupa <span id="header-class-badge" class="badge">Kelas 6A</span></h1>
                 <p>Tantangan Meracik & Mencampur 5 Warna Presisi</p>
             </header>
 
-            <!-- PANEL SETUP -->
             <div id="setup-panel" class="glass-card">
                 <div class="setup-content">
                     <h3>📜 Konfigurasi Sesi Pencampuran Warna</h3>
@@ -68,14 +65,13 @@
 
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`.</li>
-                        <li>🎨 <strong>Kolom Putih Polos:</strong> Klik palet warna di bawah untuk memasukkannya ke 5 kolom putih berbingkai hitam.</li>
+                        <li>🎨 <strong>Kolom Putih Polos:</strong> Klik palet warna di bawah untuk memasukkannya secara berurutan ke 5 kolom putih berbingkai hitam.</li>
                         <li>⏱️ <strong>Durasi 2 Menit:</strong> Waktu otomatis berjalan bergantian per siswa.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan (Fullscreen)</button>
                 </div>
             </div>
 
-            <!-- PANEL GAME UTAMA -->
             <div id="game-panel" class="glass-card hidden">
                 <div class="game-info-bar">
                     <div class="info-item">
@@ -92,7 +88,6 @@
                     </div>
                 </div>
 
-                <!-- AREA TANTANGAN WARNA -->
                 <div class="color-game-container">
                     <div class="target-display-box">
                         <span class="box-label">🎯 Target Warna: <strong id="target-color-name" style="color:#38bdf8;">-</strong></span>
@@ -110,7 +105,6 @@
                     </div>
                 </div>
 
-                <!-- KONTROL TOMBOL -->
                 <div class="tool-controls">
                     <div class="tool-group-history">
                         <button id="undo-btn" class="btn btn-secondary btn-sm" onclick="undoColor()"><i class="fas fa-undo"></i> Undo</button>
@@ -123,7 +117,6 @@
                 </div>
             </div>
 
-            <!-- PANEL SELESAI & HASIL -->
             <div id="finish-panel" class="glass-card hidden">
                 <h2>🏆 Laporan Hasil Akhir & Sinkronisasi Spreadsheet</h2>
                 <p id="sync-status-msg" style="color: #38bdf8; font-size: 13px; margin-bottom: 15px;">Mengirim data ke Google Spreadsheet...</p>
