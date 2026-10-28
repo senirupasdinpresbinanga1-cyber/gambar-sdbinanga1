@@ -10,11 +10,11 @@ let timeLeft = 120;
 let isGameActive = false;
 
 let currentSoalObj = null;
-let currentSlots = ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"];
+// Menggunakan null untuk merepresentasikan slot kosong agar tidak konflik dengan warna putih (#FFFFFF) di palet
+let currentSlots = [null, null, null, null, null];
 let historySteps = [];
 let historyStepIndex = -1;
 
-// 26 SOAL WARNA TARGET DENGAN KETERANGAN DETAIL
 const targetColorPool = [
     { hex: "#8B0000", name: "Merah Tua / Marun" },
     { hex: "#FF4500", name: "Oranye Kemerahan" },
@@ -44,7 +44,6 @@ const targetColorPool = [
     { hex: "#9932CC", name: "Ungu Tua / Magenta Keunguan" }
 ];
 
-// PALET BANYAK WARNA
 const availablePalette = [
     "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", 
     "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", 
@@ -65,9 +64,7 @@ function selectClass(className) {
 }
 
 async function fetchStudentsFromDatabase() {
-    const sidebarCountEl = document.getElementById('sidebar-count');
     const sidebarClassLabel = document.getElementById('sidebar-class-label');
-    const studentListEl = document.getElementById('student-list');
     const headerClassBadge = document.getElementById('header-class-badge');
 
     headerClassBadge.textContent = `Kelas ${selectedClass}`;
@@ -106,7 +103,6 @@ function setupStudentUI(rawNames) {
     window.rawDatabaseNames = rawNames;
 }
 
-// Inisialisasi awal
 fetchStudentsFromDatabase();
 
 document.getElementById('start-btn').addEventListener('click', startEntireGame);
@@ -174,7 +170,7 @@ function loadStudentTurn() {
     document.getElementById('target-color-box').style.backgroundColor = currentSoalObj.hex;
     document.getElementById('target-color-name').textContent = currentSoalObj.name;
 
-    currentSlots = ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"];
+    currentSlots = [null, null, null, null, null];
     renderSlots();
     renderPaletteGrid();
     
@@ -194,10 +190,14 @@ function renderSlots() {
     currentSlots.forEach((color, idx) => {
         const slot = document.createElement('div');
         slot.className = 'color-slot';
-        slot.style.backgroundColor = color;
+        if (color) {
+            slot.style.backgroundColor = color;
+        } else {
+            slot.style.backgroundColor = '#FFFFFF';
+        }
         slot.title = `Slot ${idx+1} (Klik untuk kosongkan)`;
         slot.onclick = () => {
-            currentSlots[idx] = "#FFFFFF";
+            currentSlots[idx] = null;
             renderSlots();
             saveSlotState();
         };
@@ -218,7 +218,8 @@ function renderPaletteGrid() {
 }
 
 function applyColorToNextSlot(color) {
-    const emptyIndex = currentSlots.findIndex(c => c === "#FFFFFF");
+    // Mencari slot kosong yang bernilai null (bukan berdasarkan warna putih)
+    const emptyIndex = currentSlots.findIndex(c => c === null);
     if (emptyIndex !== -1) {
         currentSlots[emptyIndex] = color;
     } else {
@@ -253,7 +254,7 @@ function redoColor() {
 }
 
 function clearSlots() {
-    currentSlots = ["#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF", "#FFFFFF"];
+    currentSlots = [null, null, null, null, null];
     renderSlots();
     saveSlotState();
 }
@@ -350,7 +351,7 @@ function calculateColorScore(slots, targetHex) {
     let rSum = 0, gSum = 0, bSum = 0, validCount = 0;
 
     slots.forEach(hex => {
-        if(hex !== "#FFFFFF") {
+        if(hex !== null) {
             let rgb = hexToRgb(hex);
             rSum += rgb.r;
             gSum += rgb.g;
