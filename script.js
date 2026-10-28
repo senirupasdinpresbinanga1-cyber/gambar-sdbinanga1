@@ -1,4 +1,3 @@
-// === MASUKKAN URL WEB APP GS ANDA DI SINI ===
 const GS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGD2akVdn5TdycTWbHvoNuLQBDWaPzIkJCY2wLgD4JvN5F47qpaOqVVyqSJWDnqtCcbA/exec";
 
 let selectedClass = "6A";
@@ -10,10 +9,8 @@ let timeLeft = 120;
 let isGameActive = false;
 
 let currentSoalObj = null;
-// Menggunakan null untuk merepresentasikan slot kosong agar tidak konflik dengan warna putih (#FFFFFF) di palet
 let currentSlots = [null, null, null, null, null];
-let historySteps = [];
-let historyStepIndex = -1;
+let selectedSlotIndex = 0; // Kolom yang sedang aktif dipilih oleh siswa (0 s/d 4)
 
 const targetColorPool = [
     { hex: "#8B0000", name: "Merah Tua / Marun" },
@@ -171,12 +168,9 @@ function loadStudentTurn() {
     document.getElementById('target-color-name').textContent = currentSoalObj.name;
 
     currentSlots = [null, null, null, null, null];
+    selectedSlotIndex = 0; // Default pilih kolom pertama
     renderSlots();
     renderPaletteGrid();
-    
-    historySteps = [];
-    historyStepIndex = -1;
-    saveSlotState();
 
     timeLeft = 120;
     document.getElementById('timer').textContent = timeLeft;
@@ -190,16 +184,18 @@ function renderSlots() {
     currentSlots.forEach((color, idx) => {
         const slot = document.createElement('div');
         slot.className = 'color-slot';
+        if (idx === selectedSlotIndex) {
+            slot.classList.add('active-slot'); // Menandai kolom yang sedang dipilih
+        }
         if (color) {
             slot.style.backgroundColor = color;
         } else {
             slot.style.backgroundColor = '#FFFFFF';
         }
-        slot.title = `Slot ${idx+1} (Klik untuk kosongkan)`;
+        slot.title = `Kolom ${idx+1} (Klik untuk memilih)`;
         slot.onclick = () => {
-            currentSlots[idx] = null;
+            selectedSlotIndex = idx;
             renderSlots();
-            saveSlotState();
         };
         container.appendChild(slot);
     });
@@ -212,51 +208,27 @@ function renderPaletteGrid() {
         const item = document.createElement('div');
         item.className = 'palette-item';
         item.style.backgroundColor = color;
-        item.onclick = () => applyColorToNextSlot(color);
+        item.onclick = () => applyColorToSelectedSlot(color);
         grid.appendChild(item);
     });
 }
 
-function applyColorToNextSlot(color) {
-    // Mencari slot kosong yang bernilai null (bukan berdasarkan warna putih)
-    const emptyIndex = currentSlots.findIndex(c => c === null);
-    if (emptyIndex !== -1) {
-        currentSlots[emptyIndex] = color;
-    } else {
-        currentSlots[4] = color;
-    }
+function applyColorToSelectedSlot(color) {
+    // Memasukkan warna ke kolom yang sedang aktif dipilih
+    currentSlots[selectedSlotIndex] = color;
     renderSlots();
-    saveSlotState();
-}
-
-function saveSlotState() {
-    historyStepIndex++;
-    if (historyStepIndex < historySteps.length) {
-        historySteps.length = historyStepIndex;
-    }
-    historySteps.push([...currentSlots]);
-}
-
-function undoColor() {
-    if (historyStepIndex > 0) {
-        historyStepIndex--;
-        currentSlots = [...historySteps[historyStepIndex]];
-        renderSlots();
-    }
-}
-
-function redoColor() {
-    if (historyStepIndex < historySteps.length - 1) {
-        historyStepIndex++;
-        currentSlots = [...historySteps[historyStepIndex]];
+    
+    // Otomatis pindah ke kolom berikutnya jika belum di kolom terakhir
+    if (selectedSlotIndex < 4) {
+        selectedSlotIndex++;
         renderSlots();
     }
 }
 
 function clearSlots() {
     currentSlots = [null, null, null, null, null];
+    selectedSlotIndex = 0;
     renderSlots();
-    saveSlotState();
 }
 
 function startTimer() {
@@ -276,6 +248,7 @@ function handleTimeUp() {
     const score = calculateColorScore(currentSlots, currentSoalObj.hex);
     
     studentResults[student.name] = { score: score + "%", status: "Waktu Habis" };
+    saveStudentScoreToDatabase(student, score + "%", "Waktu Habis");
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
@@ -298,6 +271,7 @@ function triggerSelesaiButton() {
     const score = calculateColorScore(currentSlots, currentSoalObj.hex);
     
     studentResults[student.name] = { score: score + "%", status: "Selesai" };
+    saveStudentScoreToDatabase(student, score + "%", "Selesai");
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
@@ -320,6 +294,7 @@ function skipCurrentStudent() {
         const student = studentsList[currentIndex];
         student.skipped = true;
         studentResults[student.name] = { score: "0%", status: "Tidak Hadir (Skipped)" };
+        saveStudentScoreToDatabase(student, "0%", "Tidak Hadir (Skipped)");
 
         const nextIndex = getNextValidIndex(currentIndex + 1);
         if (nextIndex < studentsList.length) {
@@ -328,6 +303,34 @@ function skipCurrentStudent() {
         } else {
             endAllTurns();
         }
+    }
+}
+
+function saveStudentScoreToDatabase(student, scoreVal, statusVal) {
+    if (student.skipped) return;
+
+    let payload = {
+        kelas: selectedClass,
+        type: "appendSingle",
+        result: {
+            nama: student.name,
+            soalWarna: student.targetSoal.name,
+            nilai: scoreVal,
+            waktu: new Date().toLocaleString('id-ID')
+        }
+    };
+
+    if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
+        fetch(GS_WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            console.log(`Nilai ${student.name} berhasil dikirim ke database.`);
+        }).catch(err => {
+            console.error("Gagal kirim nilai:", err);
+        });
     }
 }
 
@@ -407,43 +410,7 @@ function endAllTurns() {
     document.getElementById('finish-panel').classList.remove('hidden');
     renderSidebarList();
 
-    let spreadsheetPayload = {
-        kelas: selectedClass,
-        results: []
-    };
-
-    studentsList.forEach(stu => {
-        let res = studentResults[stu.name] || { score: "0%", status: "Belum" };
-        if(!stu.skipped) {
-            spreadsheetPayload.results.push({
-                nama: stu.name,
-                soalWarna: stu.targetSoal.name,
-                nilai: res.score,
-                waktu: new Date().toLocaleString('id-ID')
-            });
-        }
-    });
-
-    const syncStatusMsg = document.getElementById('sync-status-msg');
-    if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
-        fetch(GS_WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(spreadsheetPayload)
-        })
-        .then(() => {
-            syncStatusMsg.textContent = `✅ Data Nilai Berhasil Tersimpan di Sheet Data_${selectedClass}!`;
-            syncStatusMsg.style.color = "#10b981";
-        })
-        .catch(err => {
-            syncStatusMsg.textContent = "⚠️ Gagal Sinkronisasi: " + err;
-            syncStatusMsg.style.color = "#ef4444";
-        });
-    } else {
-        syncStatusMsg.textContent = "⚠️ URL Web App GS belum diatur di script.js!";
-        syncStatusMsg.style.color = "#f59e0b";
-    }
+    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh nilai siswa telah dikirim secara real-time ke Google Spreadsheet (Sheet Data_${selectedClass}).`;
 
     const tbody = document.getElementById('result-table-body');
     tbody.innerHTML = '';
