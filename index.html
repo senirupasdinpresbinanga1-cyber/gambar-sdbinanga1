@@ -38,9 +38,7 @@
         </div>
     </div>
 
-    <!-- UTAMA: SIDEBAR DAFTAR SISWA + AREA GAME -->
     <div class="main-layout">
-        
         <!-- SIDEBAR DAFTAR SISWA -->
         <aside class="student-sidebar">
             <div class="sidebar-header">
@@ -53,7 +51,7 @@
         <!-- KONTEN UTAMA -->
         <main class="app-container">
             <header class="app-header">
-                <h1>🎨 Seni Rupa <span id="header-class-badge" class="badge">Pilih Kelas</span></h1>
+                <h1>🎨 Seni Rupa <span id="header-class-badge" class="badge">Kelas 6A</span></h1>
                 <p>Tantangan Meracik & Mencampur 5 Warna Presisi</p>
             </header>
 
@@ -62,17 +60,16 @@
                 <div class="setup-content">
                     <h3>📜 Konfigurasi Sesi Pencampuran Warna</h3>
                     
-                    <label class="setup-label">1. Pilih Kelas:</label>
+                    <label class="setup-label">Pilih Kelas:</label>
                     <div class="class-selector-group">
                         <button class="btn-class active" data-class="6A" onclick="selectClass('6A')">🏫 Kelas 6A</button>
                         <button class="btn-class" data-class="6B" onclick="selectClass('6B')">🏫 Kelas 6B</button>
                     </div>
 
                     <ul class="rule-list">
-                        <li>🎨 <strong>Sistem Campur 5 Warna:</strong> Siswa mencampur 5 slot warna untuk mendekati warna target pada soal.</li>
-                        <li>🔀 <strong>26 Soal Variatif:</strong> Setiap siswa mendapatkan warna target yang berbeda lengkap dengan keterangan detail warna.</li>
-                        <li>⏱️ <strong>Waktu 2 Menit:</strong> Waktu otomatis berjalan bergantian per siswa.</li>
-                        <li>📊 <strong>Auto-Sync Spreadsheet:</strong> Nilai & detail soal warna otomatis tersimpan ke Sheet `Data_Nilai`.</li>
+                        <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`.</li>
+                        <li>🎨 <strong>Kolom Putih Polos:</strong> Klik palet warna di bawah untuk memasukkannya ke 5 kolom putih berbingkai hitam.</li>
+                        <li>⏱️ <strong>Durasi 2 Menit:</strong> Waktu otomatis berjalan bergantian per siswa.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Tantangan (Fullscreen)</button>
                 </div>
@@ -90,8 +87,8 @@
                         ⏳ Sisa Waktu: <span id="timer">120</span> dtk
                     </div>
                     <div class="action-top-group">
-                        <button id="skip-student-btn" class="btn btn-warning btn-sm" onclick="skipCurrentStudent()"><i class="fas fa-user-slash"></i> Skip Siswa (Tidak Hadir)</button>
-                        <button id="stop-btn" class="btn btn-danger btn-sm"><i class="fas fa-stop"></i> Reset Sesi</button>
+                        <button id="skip-student-btn" class="btn btn-warning btn-sm" onclick="skipCurrentStudent()"><i class="fas fa-user-slash"></i> Skip Siswa</button>
+                        <button id="stop-btn" class="btn btn-danger btn-sm" onclick="confirmStop()"><i class="fas fa-stop"></i> Reset</button>
                     </div>
                 </div>
 
@@ -103,12 +100,12 @@
                     </div>
 
                     <div class="mixing-workspace">
-                        <span class="box-label">🧪 Campuran 5 Warna Anda (Geser/Pilih Palet):</span>
+                        <span class="box-label">🧪 Kolom Campuran 5 Warna (Klik slot untuk mengosongkan):</span>
                         <div class="selected-slots-group" id="selected-slots"></div>
                     </div>
 
                     <div class="palette-pool-box">
-                        <span class="box-label">🎨 Palet Warna Tersedia:</span>
+                        <span class="box-label">🎨 Palet Banyak Warna (Klik untuk mengisi kolom di atas):</span>
                         <div id="color-palette-grid" class="palette-grid"></div>
                     </div>
                 </div>
@@ -118,7 +115,7 @@
                     <div class="tool-group-history">
                         <button id="undo-btn" class="btn btn-secondary btn-sm" onclick="undoColor()"><i class="fas fa-undo"></i> Undo</button>
                         <button id="redo-btn" class="btn btn-secondary btn-sm" onclick="redoColor()"><i class="fas fa-redo"></i> Redo</button>
-                        <button id="clear-btn" class="btn btn-danger btn-sm" onclick="clearSlots()"><i class="fas fa-trash"></i> Bersihkan Slot</button>
+                        <button id="clear-btn" class="btn btn-danger btn-sm" onclick="clearSlots()"><i class="fas fa-trash"></i> Bersihkan</button>
                     </div>
                     <div class="action-group">
                         <button id="next-turn-btn" class="btn btn-success" onclick="triggerSelesaiButton()"><i class="fas fa-arrow-right"></i> Selesai & Lanjut</button>
