@@ -383,16 +383,15 @@ function hexToRgb(hex) {
     return {r, g, b};
 }
 
-// SISTEM PENILAIAN 100% AKURAT & WAJIB 5 KOLOM TERISI PENUH
+// SISTEM PENILAIAN BARU: STRICT HUE & RGB DOMINANCE (WAJIB 5 KOLOM PENUH)
 function calculateColorScore(slots, targetHex) {
-    // Cek apakah ada kolom yang kosong (null). Jika ada 1 saja yang kosong, langsung return 0%
     let validCount = 0;
     slots.forEach(hex => {
         if (hex !== null) validCount++;
     });
 
     if (validCount < 5) {
-        return 0; // Wajib terisi 5 kolom penuh, jika tidak maka 0%
+        return 0; // Jika ada yang kosong, langsung 0%
     }
 
     const target = hexToRgb(targetHex);
@@ -405,11 +404,25 @@ function calculateColorScore(slots, targetHex) {
         bSum += rgb.b;
     });
 
-    let avgR = rSum / 5;
-    let avgG = gSum / 5;
-    let avgB = bSum / 5;
+    let avgR = Math.round(rSum / 5);
+    let avgG = Math.round(gSum / 5);
+    let avgB = Math.round(bSum / 5);
 
-    // Hitung jarak Euclidean 3D warna
+    // 1. Cek Dominasi Komponen Warna Utama (Red, Green, Blue)
+    // Memastikan apakah warna racikan siswa memiliki dominasi saluran warna yang SEJENIS dengan target
+    let targetMax = Math.max(target.r, target.g, target.b);
+    let avgMax = Math.max(avgR, avgG, avgB);
+
+    let targetDominant = target.r === targetMax ? 'R' : (target.g === targetMax ? 'G' : 'B');
+    let avgDominant = avgR === avgMax ? 'R' : (avgG === avgMax ? 'G' : 'B');
+
+    // Jika saluran warna dominannya beda (misal target hijau [G dominan] tapi diisi hitam/merah/biru), langsung beri penalti berat (maksimal 25%)
+    let baseMultiplier = 1.0;
+    if (targetDominant !== avgDominant) {
+        baseMultiplier = 0.25; // Sesuai permintaan Anda: jika salah warna jauh tapi ada sisa warna/gelap, maksimal sekitar 25%
+    }
+
+    // 2. Hitung Jarak Euclidean 3D
     let distance = Math.sqrt(
         Math.pow(target.r - avgR, 2) +
         Math.pow(target.g - avgG, 2) +
@@ -417,11 +430,9 @@ function calculateColorScore(slots, targetHex) {
     );
 
     let maxDistance = 441.6; // Akar dari (255^2 + 255^2 + 255^2)
-    
-    // Perhitungan diperketat drastis dengan pangkat 3.5 agar yang melenceng jauh (seperti hitam vs oranye) mutlak jadi 0%
-    let accuracyRatio = Math.max(0, 1 - Math.pow(distance / maxDistance, 3.5));
-    
-    let finalScore = Math.round(accuracyRatio * 100);
+    let accuracyRatio = Math.max(0, 1 - Math.pow(distance / maxDistance, 2.0));
+
+    let finalScore = Math.round(accuracyRatio * baseMultiplier * 100);
     return Math.min(100, Math.max(0, finalScore));
 }
 
