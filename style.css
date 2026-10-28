@@ -252,13 +252,20 @@ body {
     border-radius: 8px;
     border: 3px solid #000000;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .color-slot:hover {
     transform: scale(1.08);
-    border-color: #38bdf8;
+}
+
+/* Efek Kolom yang Sedang Dipilih Aktif */
+.color-slot.active-slot {
+    border-color: #38bdf8 !important;
+    border-width: 4px;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.8);
+    transform: scale(1.05);
 }
 
 /* PALET BANYAK WARNA */
