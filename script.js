@@ -194,8 +194,10 @@ function renderSlots() {
         }
         if (color) {
             slot.style.backgroundColor = color;
+            slot.classList.remove('transparent-bg');
         } else {
-            slot.style.backgroundColor = '#FFFFFF';
+            slot.style.backgroundColor = '';
+            slot.classList.add('transparent-bg'); // Pola transparan ala PNG
         }
         slot.title = `Kolom ${idx+1} (Klik untuk memilih)`;
         slot.onclick = () => {
@@ -248,7 +250,7 @@ function calculateMixedColor(slots) {
         }
     });
 
-    if (count === 0) return "#FFFFFF";
+    if (count === 0) return null;
 
     let avgR = Math.round(rSum / count);
     let avgG = Math.round(gSum / count);
@@ -260,7 +262,13 @@ function calculateMixedColor(slots) {
 function updateMixedResultBox() {
     const resultBox = document.getElementById('mixed-result-box');
     let mixedRgbStyle = calculateMixedColor(currentSlots);
-    resultBox.style.backgroundColor = mixedRgbStyle;
+    if (mixedRgbStyle) {
+        resultBox.style.backgroundColor = mixedRgbStyle;
+        resultBox.classList.remove('transparent-bg');
+    } else {
+        resultBox.style.backgroundColor = '';
+        resultBox.classList.add('transparent-bg');
+    }
 }
 
 function startTimer() {
@@ -383,7 +391,6 @@ function hexToRgb(hex) {
     return {r, g, b};
 }
 
-// SISTEM PENILAIAN BARU: STRICT HUE & RGB DOMINANCE (WAJIB 5 KOLOM PENUH)
 function calculateColorScore(slots, targetHex) {
     let validCount = 0;
     slots.forEach(hex => {
@@ -391,7 +398,7 @@ function calculateColorScore(slots, targetHex) {
     });
 
     if (validCount < 5) {
-        return 0; // Jika ada yang kosong, langsung 0%
+        return 0; // Wajib terisi 5 kolom penuh
     }
 
     const target = hexToRgb(targetHex);
@@ -408,28 +415,24 @@ function calculateColorScore(slots, targetHex) {
     let avgG = Math.round(gSum / 5);
     let avgB = Math.round(bSum / 5);
 
-    // 1. Cek Dominasi Komponen Warna Utama (Red, Green, Blue)
-    // Memastikan apakah warna racikan siswa memiliki dominasi saluran warna yang SEJENIS dengan target
     let targetMax = Math.max(target.r, target.g, target.b);
     let avgMax = Math.max(avgR, avgG, avgB);
 
     let targetDominant = target.r === targetMax ? 'R' : (target.g === targetMax ? 'G' : 'B');
     let avgDominant = avgR === avgMax ? 'R' : (avgG === avgMax ? 'G' : 'B');
 
-    // Jika saluran warna dominannya beda (misal target hijau [G dominan] tapi diisi hitam/merah/biru), langsung beri penalti berat (maksimal 25%)
     let baseMultiplier = 1.0;
     if (targetDominant !== avgDominant) {
-        baseMultiplier = 0.25; // Sesuai permintaan Anda: jika salah warna jauh tapi ada sisa warna/gelap, maksimal sekitar 25%
+        baseMultiplier = 0.25; 
     }
 
-    // 2. Hitung Jarak Euclidean 3D
     let distance = Math.sqrt(
         Math.pow(target.r - avgR, 2) +
         Math.pow(target.g - avgG, 2) +
         Math.pow(target.b - avgB, 2)
     );
 
-    let maxDistance = 441.6; // Akar dari (255^2 + 255^2 + 255^2)
+    let maxDistance = 441.6;
     let accuracyRatio = Math.max(0, 1 - Math.pow(distance / maxDistance, 2.0));
 
     let finalScore = Math.round(accuracyRatio * baseMultiplier * 100);
