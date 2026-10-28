@@ -271,7 +271,6 @@ body {
     height: 52px;
     border-radius: 8px;
     border: 3px solid #38bdf8;
-    background-color: #FFFFFF;
     box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
 }
 
@@ -281,6 +280,7 @@ body {
     justify-content: center;
 }
 
+/* KOTA SLOT & HASIL DENGAN POLA BACKGROUND TRANSPARAN (CHECKERBOARD ALA PNG) */
 .color-slot {
     width: 48px;
     height: 52px;
@@ -289,6 +289,16 @@ body {
     cursor: pointer;
     transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.transparent-bg {
+    background-image: linear-gradient(45deg, #cbd5e1 25%, transparent 25%), 
+                      linear-gradient(-45deg, #cbd5e1 25%, transparent 25%), 
+                      linear-gradient(45deg, transparent 75%, #cbd5e1 75%), 
+                      linear-gradient(-45deg, transparent 75%, #cbd5e1 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+    background-color: #f1f5f9;
 }
 
 .color-slot:hover {
