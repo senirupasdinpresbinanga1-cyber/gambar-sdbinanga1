@@ -12,33 +12,63 @@ let currentSoalObj = null;
 let currentSlots = [null, null, null, null, null];
 let selectedSlotIndex = 0;
 
-const targetColorPool = [
-    { hex: "#8B0000", name: "Merah Tua / Marun" },
-    { hex: "#FF4500", name: "Oranye Kemerahan" },
-    { hex: "#FFD700", name: "Kuning Keemasan" },
-    { hex: "#ADFF2F", name: "Hijau Kekuningan" },
-    { hex: "#008000", name: "Hijau Murni" },
-    { hex: "#00FFFF", name: "Biru Muda / Sian" },
-    { hex: "#1E90FF", name: "Biru Cerah" },
-    { hex: "#00008B", name: "Biru Tua / Gelap" },
-    { hex: "#8A2BE2", name: "Ungu Kebiruan" },
-    { hex: "#FF1493", name: "Merah Muda Tua / Pink Pekat" },
-    { hex: "#D2B48C", name: "Cokelat Muda / Tan" },
-    { hex: "#A0522D", name: "Cokelat Kemerahan" },
-    { hex: "#556B2F", name: "Hijau Lumut / Zaitun Tua" },
-    { hex: "#2F4F4F", name: "Abu-abu Kehijauan Tua" },
-    { hex: "#483D8B", name: "Ungu Kebiruan Gelap" },
-    { hex: "#FF8C00", name: "Oranye Tua" },
-    { hex: "#9ACD32", name: "Hijau Zaitun Muda" },
-    { hex: "#20B2AA", name: "Hijau Laut Cerah" },
-    { hex: "#778899", name: "Abu-abu Kebiruan" },
-    { hex: "#B0C4DE", name: "Biru Muda Keabuan" },
-    { hex: "#DB7093", name: "Merah Muda Keunguan" },
-    { hex: "#FF69B4", name: "Merah Muda / Pink Cerah" },
-    { hex: "#CD853F", name: "Cokelat Kayu" },
-    { hex: "#6B8E23", name: "Hijau Zaitun" },
-    { hex: "#4682B4", name: "Biru Baja" },
-    { hex: "#9932CC", name: "Ungu Tua / Magenta Keunguan" }
+// 26 Warna untuk Kelas 6A (Merah sampai Zaitun sesuai daftar urutan Anda)
+const targetColorPool6A = [
+    { hex: "#FF0000", name: "Merah" },
+    { hex: "#FFC0CB", name: "Merah muda" },
+    { hex: "#800000", name: "Merah marun" },
+    { hex: "#FFA500", name: "Jingga" },
+    { hex: "#FFFF00", name: "Kuning" },
+    { hex: "#FFD700", name: "Kuning emas" },
+    { hex: "#008000", name: "Hijau" },
+    { hex: "#98FB98", name: "Hijau muda" },
+    { hex: "#006400", name: "Hijau tua" },
+    { hex: "#008080", name: "Toska" },
+    { hex: "#0000FF", name: "Biru" },
+    { hex: "#ADD8E6", name: "Biru muda" },
+    { hex: "#00008B", name: "Biru tua" },
+    { hex: "#00BFFF", name: "Biru laut" },
+    { hex: "#800080", name: "Ungu" },
+    { hex: "#E6E6FA", name: "Lavender" },
+    { hex: "#EE82EE", name: "Violet" },
+    { hex: "#A52A2A", name: "Cokelat" },
+    { hex: "#D2B48C", name: "Cokelat muda" },
+    { hex: "#FFFDD0", name: "Krem" },
+    { hex: "#F5F5DC", name: "Beige" },
+    { hex: "#FF00FF", name: "Magenta" },
+    { hex: "#FA8072", name: "Salem" },
+    { hex: "#4B0082", name: "Nila" },
+    { hex: "#FFDAB9", name: "Peach" },
+    { hex: "#808000", name: "Zaitun" }
+];
+
+// 25 Warna untuk Kelas 6B (Merah sampai Peach - tanpa Zaitun)
+const targetColorPool6B = [
+    { hex: "#FF0000", name: "Merah" },
+    { hex: "#FFC0CB", name: "Merah muda" },
+    { hex: "#800000", name: "Merah marun" },
+    { hex: "#FFA500", name: "Jingga" },
+    { hex: "#FFFF00", name: "Kuning" },
+    { hex: "#FFD700", name: "Kuning emas" },
+    { hex: "#008000", name: "Hijau" },
+    { hex: "#98FB98", name: "Hijau muda" },
+    { hex: "#006400", name: "Hijau tua" },
+    { hex: "#008080", name: "Toska" },
+    { hex: "#0000FF", name: "Biru" },
+    { hex: "#ADD8E6", name: "Biru muda" },
+    { hex: "#00008B", name: "Biru tua" },
+    { hex: "#00BFFF", name: "Biru laut" },
+    { hex: "#800080", name: "Ungu" },
+    { hex: "#E6E6FA", name: "Lavender" },
+    { hex: "#EE82EE", name: "Violet" },
+    { hex: "#A52A2A", name: "Cokelat" },
+    { hex: "#D2B48C", name: "Cokelat muda" },
+    { hex: "#FFFDD0", name: "Krem" },
+    { hex: "#F5F5DC", name: "Beige" },
+    { hex: "#FF00FF", name: "Magenta" },
+    { hex: "#FA8072", name: "Salem" },
+    { hex: "#4B0082", name: "Nila" },
+    { hex: "#FFDAB9", name: "Peach" }
 ];
 
 const availablePalette = [
@@ -127,7 +157,10 @@ function startEntireGame() {
         return;
     }
 
-    const shuffledSoal = shuffleArray(targetColorPool);
+    // Tentukan pool warna berdasarkan kelas yang dipilih (6A = 26 warna, 6B = 25 warna)
+    let activeColorPool = (selectedClass === "6A") ? targetColorPool6A : targetColorPool6B;
+    const shuffledSoal = shuffleArray(activeColorPool);
+    const totalSoalCount = activeColorPool.length;
 
     studentsList = names.map((name, idx) => {
         let soal = shuffledSoal[idx % shuffledSoal.length];
@@ -135,6 +168,7 @@ function startEntireGame() {
             name: name, 
             targetSoal: soal,
             soalNo: (idx % shuffledSoal.length) + 1,
+            maxSoal: totalSoalCount,
             skipped: false
         };
     });
@@ -165,7 +199,7 @@ function loadStudentTurn() {
     }
 
     document.getElementById('current-player').textContent = currentStudent.name;
-    document.getElementById('target-soal-badge').textContent = `Soal ${currentStudent.soalNo} / 26`;
+    document.getElementById('target-soal-badge').textContent = `Soal ${currentStudent.soalNo} / ${currentStudent.maxSoal}`;
     currentSoalObj = currentStudent.targetSoal;
     
     document.getElementById('target-color-box').style.backgroundColor = currentSoalObj.hex;
@@ -197,7 +231,7 @@ function renderSlots() {
             slot.classList.remove('transparent-bg');
         } else {
             slot.style.backgroundColor = '';
-            slot.classList.add('transparent-bg'); // Pola transparan ala PNG
+            slot.classList.add('transparent-bg');
         }
         slot.title = `Kolom ${idx+1} (Klik untuk memilih)`;
         slot.onclick = () => {
@@ -398,7 +432,7 @@ function calculateColorScore(slots, targetHex) {
     });
 
     if (validCount < 5) {
-        return 0; // Wajib terisi 5 kolom penuh
+        return 0; 
     }
 
     const target = hexToRgb(targetHex);
