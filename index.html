@@ -98,22 +98,19 @@
         </div>
     </div>
 
-    <!-- Modal Pilih Judul Gambar untuk Siswa -->
+    <!-- Modal Pilih Judul Gambar untuk Siswa (Sudah Dihapus Bagian Ketik Sendiri) -->
     <div id="student-choice-modal" class="full-overlay" style="display: none;">
         <div class="card modal-card" style="max-width: 500px;">
             <div class="modal-header">
                 <h3><i class="fas fa-book-open"></i> Pilih Objek Gambar</h3>
             </div>
             <div class="modal-body" style="text-align: left;">
-                <p style="font-size: 14px; color: #cbd5e1; margin-bottom: 10px;">Halo <strong id="modal-student-name" style="color: #38bdf8;">-</strong>, silakan pilih atau ketik nama objek yang ingin digambar dari paket <strong id="modal-package-name" style="color: #f59e0b;">-</strong>:</p>
+                <p style="font-size: 14px; color: #cbd5e1; margin-bottom: 15px;">Halo <strong id="modal-student-name" style="color: #38bdf8;">-</strong>, silakan pilih objek yang ingin digambar dari paket <strong id="modal-package-name" style="color: #f59e0b;">-</strong>:</p>
                 
-                <label style="font-size: 13px; color: #94a3b8; display: block; margin-bottom: 5px;">Pilih dari daftar paket:</label>
-                <select id="package-item-select" class="btn-class" style="width: 100%; margin-bottom: 15px; text-align: left; background: #0f172a;"></select>
-                
-                <label style="font-size: 13px; color: #94a3b8; display: block; margin-bottom: 5px;">Atau ketik sendiri objeknya:</label>
-                <input type="text" id="custom-item-input" placeholder="Contoh: Kucing Anggora" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; margin-bottom: 20px;">
+                <label style="font-size: 13px; color: #94a3b8; display: block; margin-bottom: 8px;">Daftar Objek Tersedia (Objek yang sudah diambil siswa lain otomatis hilang):</label>
+                <select id="package-item-select" class="btn-class" style="width: 100%; margin-bottom: 20px; text-align: left; background: #0f172a; padding: 12px; font-size: 14px;"></select>
 
-                <button class="btn btn-glow" onclick="confirmStudentChoice()" style="width: 100%; padding: 12px;">Mulai Menggambar <i class="fas fa-play"></i></button>
+                <button class="btn btn-glow" onclick="confirmStudentChoice()" style="width: 100%; padding: 12px; font-size: 15px;">Mulai Menggambar <i class="fas fa-play"></i></button>
             </div>
         </div>
     </div>
@@ -179,8 +176,8 @@
 
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet[cite: 1, 2].</li>
-                        <li>🔒 <strong>Sistem Objek Unik:</strong> Objek yang sudah diambil siswa lain otomatis hilang.</li>
-                        <li>⏳ <strong>Batas Waktu:</strong> Durasi menggambar **180 detik (3 menit)** per siswa.</li>
+                        <li>🔒 <strong>Sistem Objek Unik:</strong> Objek yang sudah diambil siswa lain otomatis hilang[cite: 2].</li>
+                        <li>⏳ <strong>Batas Waktu:</strong> Durasi menggambar **180 detik (3 menit)** per siswa[cite: 2].</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Sesi Menggambar (Fullscreen)</button>
                 </div>
@@ -229,7 +226,6 @@
                 </div>
 
                 <div class="canvas-wrapper">
-                    <!-- Ukuran pixel internal diset eksplisit -->
                     <canvas id="drawing-canvas" width="800" height="380"></canvas>
                 </div>
 
