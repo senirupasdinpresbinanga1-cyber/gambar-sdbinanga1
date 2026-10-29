@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seni Rupa - Kanvas Menggambar Bebas Kelas</title>
+    <title>Seni Rupa - Kanvas Menggambar Bebas & Timer</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,12 +11,21 @@
 <body>
     <div class="fullscreen-bg"></div>
 
-    <!-- Warning Overlay -->
+    <!-- Warning Overlay (Fullscreen) -->
     <div id="warning-overlay" class="full-overlay" style="display: none;">
         <div class="card warning-card">
             <h2 style="margin-bottom: 12px; color: #dc3545; font-size: 24px;"><i class="fas fa-exclamation-triangle"></i> PERINGATAN!</h2>
             <p style="color: #1e293b; font-size: 15px; font-weight: 700; margin-bottom: 10px;">Anda terdeteksi keluar dari layar penuh / berpindah aplikasi.</p>
             <button class="btn btn-danger" onclick="returnToFullscreen()" style="width: 100%; padding: 12px;"><i class="fas fa-compress"></i> Kembali ke Layar Penuh</button>
+        </div>
+    </div>
+
+    <!-- Time Up Overlay (Waktu Habis 2 Menit) -->
+    <div id="timeup-overlay" class="full-overlay" style="display: none;">
+        <div class="card timeup-card">
+            <h2 style="margin-bottom: 10px; color: #f59e0b; font-size: 24px;"><i class="fas fa-hourglass-end"></i> Waktu Habis!</h2>
+            <p id="timeup-message" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Waktu menggambar 2 menit telah selesai.</p>
+            <button class="btn btn-glow" onclick="proceedNextAfterTimeUp()" style="width: 100%; padding: 12px; font-size: 16px;">Lanjutkan <i class="fas fa-arrow-right"></i></button>
         </div>
     </div>
 
@@ -54,7 +63,7 @@
         <main class="app-container">
             <header class="app-header">
                 <h1>🎨 Seni Rupa <span id="header-class-badge" class="badge">Kelas 6A</span></h1>
-                <p>Kanvas Menggambar Bebas & Cat Warna Digital</p>
+                <p>Kanvas Menggambar Bebas & Cat Warna (Batas 2 Menit)</p>
             </header>
 
             <!-- Setup Panel -->
@@ -69,21 +78,24 @@
                     </div>
 
                     <ul class="rule-list">
-                        <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`.</li>
-                        <li>🎨 <strong>Menggambar Bebas:</strong> Kanvas interaktif dilengkapi pilihan kuas, penghapus, dan kuas warna.</li>
-                        <li>⚡ <strong>Real-time Sync:</strong> Hasil karya gambar disimpan otomatis per siswa ke Google Sheets.</li>
+                        <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`[cite: 1, 2].</li>
+                        <li>⏳ <strong>Batas Waktu:</strong> Setiap siswa memiliki waktu menggambar maksimal **120 detik (2 menit)**[cite: 3].</li>
+                        <li>⚡ <strong>Real-time Sync:</strong> Hasil karya gambar disimpan otomatis per siswa ke Google Spreadsheet[cite: 2, 3].</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Sesi Menggambar (Fullscreen)</button>
                 </div>
             </div>
 
-            <!-- Game / Drawing Panel -->
+            <!-- Drawing Panel -->
             <div id="game-panel" class="glass-card hidden">
                 <div class="game-info-bar">
                     <div class="info-item">
                         <span class="label">Pemain Saat Ini:</span>
                         <h2 id="current-player" class="highlight-name">-</h2>
                         <span id="target-soal-badge" class="target-badge">Siswa 1</span>
+                    </div>
+                    <div class="timer-display">
+                        ⏳ Sisa Waktu: <span id="timer">120</span> dtk
                     </div>
                     <div class="action-top-group">
                         <button id="skip-student-btn" class="btn btn-warning btn-sm" onclick="skipCurrentStudent()"><i class="fas fa-user-slash"></i> Skip Siswa</button>
@@ -105,13 +117,13 @@
                     </div>
 
                     <div class="tool-group">
-                        <label for="color-picker">Warna Custom:</label>
+                        <label for="color-picker">Warna:</label>
                         <input type="color" id="color-picker" value="#000000" onchange="setCurrentColor(this.value)">
                     </div>
 
                     <div class="tool-group">
                         <button class="btn btn-secondary btn-sm" onclick="undoCanvas()"><i class="fas fa-undo"></i> Undo</button>
-                        <button class="btn btn-danger btn-sm" onclick="clearCanvas()"><i class="fas fa-trash"></i> Bersihkan Kanvas</button>
+                        <button class="btn btn-danger btn-sm" onclick="clearCanvas()"><i class="fas fa-trash"></i> Bersihkan</button>
                     </div>
                 </div>
 
@@ -123,7 +135,7 @@
 
                 <!-- Canvas Work Area -->
                 <div class="canvas-wrapper">
-                    <canvas id="drawing-canvas" width="800" height="450"></canvas>
+                    <canvas id="drawing-canvas" width="800" height="430"></canvas>
                 </div>
 
                 <div class="tool-controls">
@@ -136,7 +148,7 @@
             <!-- Finish Panel -->
             <div id="finish-panel" class="glass-card hidden">
                 <h2>🏆 Laporan Hasil Karya Sesi</h2>
-                <p id="sync-status-msg" style="color: #38bdf8; font-size: 13px; margin-bottom: 15px;">Semua hasil gambar siswa telah berhasil diperbarui ke Google Spreadsheet secara real-time.</p>
+                <p id="sync-status-msg" style="color: #38bdf8; font-size: 13px; margin-bottom: 15px;">Semua hasil gambar siswa telah berhasil diperbarui ke Google Spreadsheet secara real-time[cite: 2, 3].</p>
                 
                 <div class="result-table-wrapper">
                     <table class="result-table" id="result-table-element">
