@@ -11,6 +11,8 @@ let countdown;
 let timeLeft = 180; // 3 Menit
 let isGameActive = false;
 let adminInterval = null;
+let studentSyncInterval = null;
+let lastSyncedState = "";
 
 const packagesData = {
     hewan: [
@@ -53,7 +55,7 @@ const availablePalette = [
     "#6B8E23", "#9932CC"
 ];
 
-// --- LOGIN ADMIN & KONTROL SISTEM ---
+// --- LOGIN ADMIN ---
 function openAdminLoginModal() {
     document.getElementById('admin-login-modal').style.display = 'flex';
     document.getElementById('admin-user-input').value = '';
@@ -102,17 +104,32 @@ function updateAdminControlPanel() {
 
     if (isGameActive && studentsList[currentIndex]) {
         playerEl.textContent = studentsList[currentIndex].name;
-        objekEl.textContent = studentsList[currentIndex].chosenItem || "Sedang memilih...";
+        objekEl.textContent = studentsList[currentIndex].chosenItem || "Memilih Objek...";
     } else {
         playerEl.textContent = "- (Sesi Belum Mulai)";
         objekEl.textContent = "-";
     }
 }
 
-// 🎮 AKSI ADMIN: SKIP, RESET, DAN ANALISIS AI
+// 🌐 SINKRONISASI STATE KE SERVER
+function updateGameStateOnServer(status, idx, studentName, objekName) {
+    if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
+        fetch(GS_WEB_APP_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                type: "updateState",
+                state: { status: status, currentIndex: idx, currentStudent: studentName, currentObjek: objekName }
+            })
+        }).catch(err => console.error("Gagal sinkron state:", err));
+    }
+}
+
+// 🎮 AKSI ADMIN: TRIGGER DARI PANEL KONTROL ADMIN
 function adminAction(actionType) {
     if (!isGameActive) {
-        alert("Sesi menggambar sedang tidak berjalan!");
+        alert("Sesi menggambar sedang tidak berjalan! Silakan mulai sesi terlebih dahulu di layar utama.");
         return;
     }
 
@@ -122,6 +139,7 @@ function adminAction(actionType) {
         skipCurrentStudent();
     } else if (actionType === 'reset') {
         if (confirm("Apakah Anda yakin ingin mereset sesi menggambar?")) {
+            updateGameStateOnServer("RESET", 0, "", "");
             location.reload();
         }
     }
@@ -131,7 +149,6 @@ function switchAdminClass(kelas) {
     adminSelectedClass = kelas;
     document.getElementById('admin-btn-6a').classList.toggle('active', kelas === '6A');
     document.getElementById('admin-btn-6b').classList.toggle('active', kelas === '6B');
-
     fetchAdminDatabaseData(false);
 }
 
@@ -285,6 +302,30 @@ function startEntireGame() {
     renderPaletteGrid();
     renderSidebarList();
     promptStudentChoice();
+
+    // Kirim state awal ke server agar layar siswa tersinkron
+    updateGameStateOnServer("CHOICE", currentIndex, studentsList[currentIndex].name, "");
+
+    // Aktifkan sinkronisasi siswa di background
+    startStudentSyncListener();
+}
+
+// 🔄 LISTENER DI SISI SISWA UNTUK MENERIMA PERINTAH DARI ADMIN
+function startStudentSyncListener() {
+    if (studentSyncInterval) clearInterval(studentSyncInterval);
+    studentSyncInterval = setInterval(async () => {
+        if (!isGameActive) return;
+        try {
+            let res = await fetch(`${GS_WEB_APP_URL}?action=getGameState`);
+            let state = await res.json();
+            
+            if (state.status === "RESET") {
+                location.reload();
+            }
+        } catch (e) {
+            console.error("Sync error:", e);
+        }
+    }, 1500);
 }
 
 function initCanvas() {
@@ -346,6 +387,16 @@ function promptStudentChoice() {
         return;
     }
 
+    // ✨ TAMPILKAN POP-UP "Giliran Nama..." SEBELUM MEMILIH GAMBAR SESUAI PERMINTAAN ANDA
+    document.getElementById('turn-alert-msg').innerHTML = `Giliran Berikutnya <strong style="color:#38bdf8;">${student.name}..</strong>`;
+    document.getElementById('turn-alert-overlay').style.display = 'flex';
+}
+
+// Saat tombol Lanjutkan pada alert giliran ditekan, baru buka menu pilih gambar
+document.getElementById('turn-alert-overlay').querySelector('button').onclick = () => {
+    document.getElementById('turn-alert-overlay').style.display = 'none';
+    
+    const student = studentsList[currentIndex];
     document.getElementById('modal-student-name').textContent = student.name;
     document.getElementById('modal-package-name').textContent = selectedPackageKey.toUpperCase();
     
@@ -371,7 +422,7 @@ function promptStudentChoice() {
 
     document.getElementById('custom-item-input').value = "";
     document.getElementById('student-choice-modal').style.display = 'flex';
-}
+};
 
 function confirmStudentChoice() {
     const customInput = document.getElementById('custom-item-input').value.trim();
@@ -399,6 +450,8 @@ function confirmStudentChoice() {
     document.getElementById('timer').textContent = timeLeft;
     startTimer();
     renderSidebarList();
+
+    updateGameStateOnServer("DRAWING", currentIndex, studentsList[currentIndex].name, chosen);
 }
 
 function handleCanvasDown(e) {
@@ -654,20 +707,11 @@ function handleTimeUp() {
     saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Waktu Habis");
 
     renderSidebarList();
+    document.getElementById('game-panel').classList.add('hidden');
 
-    const nextIndex = getNextValidIndex(currentIndex + 1);
-    if (nextIndex < studentsList.length) {
-        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Giliran Berikutnya <strong style="color:#38bdf8;">${studentsList[nextIndex].name}..</strong>`;
-    } else {
-        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
-    }
-    document.getElementById('timeup-overlay').style.display = 'flex';
-}
-
-function proceedNextAfterTimeUp() {
-    document.getElementById('timeup-overlay').style.display = 'none';
     currentIndex++;
     promptStudentChoice();
+    updateGameStateOnServer("CHOICE", currentIndex, studentsList[currentIndex] ? studentsList[currentIndex].name : "", "");
 }
 
 function triggerSelesaiButton() {
@@ -689,19 +733,13 @@ function triggerSelesaiButton() {
 
     renderSidebarList();
 
-    const nextIndex = getNextValidIndex(currentIndex + 1);
-    if (nextIndex < studentsList.length) {
-        document.getElementById('turn-alert-msg').textContent = `Giliran Berikutnya ${studentsList[nextIndex].name}..`;
-        document.getElementById('turn-alert-overlay').style.display = 'flex';
+    currentIndex++;
+    if (currentIndex < studentsList.length) {
+        promptStudentChoice();
+        updateGameStateOnServer("CHOICE", currentIndex, studentsList[currentIndex].name, "");
     } else {
         endAllTurns();
     }
-}
-
-function closeTurnAlert() {
-    document.getElementById('turn-alert-overlay').style.display = 'none';
-    currentIndex++;
-    promptStudentChoice();
 }
 
 function skipCurrentStudent() {
@@ -714,17 +752,13 @@ function skipCurrentStudent() {
 
     renderSidebarList();
 
-    const nextIndex = getNextValidIndex(currentIndex + 1);
-    if (nextIndex < studentsList.length) {
-        currentIndex++;
+    currentIndex++;
+    if (currentIndex < studentsList.length) {
         promptStudentChoice();
+        updateGameStateOnServer("CHOICE", currentIndex, studentsList[currentIndex].name, "");
     } else {
         endAllTurns();
     }
-}
-
-function confirmStop() {
-    location.reload();
 }
 
 function saveStudentScoreToDatabase(student, imageBase64, scoreVal, statusVal) {
@@ -750,11 +784,7 @@ function saveStudentScoreToDatabase(student, imageBase64, scoreVal, statusVal) {
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
-        }).then(() => {
-            console.log(`Nilai AI & Gambar ${student.name} tersimpan ke database.`);
-        }).catch(err => {
-            console.error("Gagal simpan data:", err);
-        });
+        }).catch(err => console.error("Gagal simpan data:", err));
     }
 }
 
