@@ -51,7 +51,7 @@ const availablePalette = [
     "#6B8E23", "#9932CC"
 ];
 
-// --- FUNGSI LOGIN ADMIN & DASHBOARD ---
+// --- LOGIN ADMIN & DASHBOARD ---
 function openAdminLoginModal() {
     document.getElementById('admin-login-modal').style.display = 'flex';
     document.getElementById('admin-user-input').value = '';
@@ -115,7 +115,7 @@ async function fetchAdminDatabaseData() {
                 const nilai = row[3] || '0%';
                 const waktu = row[5] || '-';
 
-                let actionBtn = gambar ? `<button class="btn btn-glow btn-sm" onclick="openImageModal('${name}', '${gambar}', '${nilai}', 'Gambar disimpan di database.')"><i class="fas fa-image"></i> Buka Hasil Gambar</button>` : '-';
+                let actionBtn = gambar ? `<button class="btn btn-glow btn-sm" onclick="openImageModal('${name}', '${gambar}', '${nilai}', 'Gambar tersimpan di database.')"><i class="fas fa-image"></i> Buka Hasil Gambar</button>` : '-';
 
                 tr.innerHTML = `
                     <td><strong>${name}</strong></td>
@@ -142,7 +142,6 @@ async function fetchAdminDatabaseData() {
         `;
     }
 }
-
 
 function selectClass(className) {
     selectedClass = className;
@@ -491,51 +490,94 @@ function floodFill(startX, startY, fillColor) {
     ctx.putImageData(imgData, 0, 0);
 }
 
-// 🧠 SISTEM PENILAIAN AI AKURAT (0% - 100%)
+// 🎯 SISTEM PENILAIAN AI PRESISI & AKURAT (0% - 100%)
 function evaluateDrawingWithAI() {
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const width = canvas.width;
+    const height = canvas.height;
+    const imgData = ctx.getImageData(0, 0, width, height);
     const data = imgData.data;
-    let totalPixels = canvas.width * canvas.height;
-    let coloredPixels = 0;
+
+    let totalPixels = width * height;
+    let nonWhitePixels = 0;
+    let edgeTransitions = 0; // Menghitung gerigi/bengkokan garis
     let uniqueColors = new Set();
 
-    for (let i = 0; i < data.length; i += 4) {
-        let r = data[i];
-        let g = data[i+1];
-        let b = data[i+2];
+    // Matriks 2D sederhana untuk analisis kerapian tepi garis
+    let grid = new Array(height);
+    for (let y = 0; y < height; y++) {
+        grid[y] = new Uint8Array(width);
+    }
 
-        if (!(r > 250 && g > 250 && b > 250)) {
-            coloredPixels++;
-            uniqueColors.add(`${r},${g},${b}`);
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            let idx = (y * width + x) * 4;
+            let r = data[idx];
+            let g = data[idx + 1];
+            let b = data[idx + 2];
+
+            // Cek apakah piksel terisi warna (Bukan latar putih bersih)
+            if (!(r > 245 && g > 245 && b > 245)) {
+                nonWhitePixels++;
+                grid[y][x] = 1; // Piksel bergambar
+                uniqueColors.add(`${Math.floor(r / 32)},${Math.floor(g / 32)},${Math.floor(b / 32)}`);
+            } else {
+                grid[y][x] = 0;
+            }
         }
     }
 
-    let densityRatio = coloredPixels / totalPixels;
-    let colorVariety = uniqueColors.size;
+    // 1. CEK KELENGKAPAN KARYA (Kuantitas Objek)
+    let fillRatio = nonWhitePixels / totalPixels;
 
-    let score = 0;
+    // Jika gambar terlalu kosong/sedikit (seperti hanya gambar 1 mata / titik kecil)
+    if (nonWhitePixels < 1500) {
+        return {
+            score: `${Math.floor(Math.random() * 10) + 12}%`,
+            desc: "AI Penilai: Gambar sangat minim / terlalu simpel. Objek tidak lengkap atau hanya coretan kecil."
+        };
+    }
+
+    // 2. DETEKSI BENGKOKAN & KERAPIAN GARIS (Edge Smoothness Score)
+    for (let y = 1; y < height - 1; y += 2) {
+        for (let x = 1; x < width - 1; x += 2) {
+            if (grid[y][x] === 1) {
+                // Cek perubahan mendadak di sekeliling piksel (indikator garis bengkok/kasar)
+                let neighbors = grid[y - 1][x] + grid[y + 1][x] + grid[y][x - 1] + grid[y][x + 1];
+                if (neighbors === 1 || neighbors === 3) {
+                    edgeTransitions++;
+                }
+            }
+        }
+    }
+
+    // Rasio ketidakrapian garis
+    let jaggedRatio = edgeTransitions / nonWhitePixels;
+
+    // Hitung Skor Garis (Makin bengkok/bergerigi, skor makin turun)
+    let lineSmoothnessScore = 50 - (jaggedRatio * 180);
+    lineSmoothnessScore = Math.max(5, Math.min(50, lineSmoothnessScore));
+
+    // 3. HITUNG SKOR KERAPIAN WARNA & KOPERATIFAN BENTUK
+    let colorVarietyScore = Math.min(25, uniqueColors.size * 5);
+    let completenessScore = Math.min(25, fillRatio * 350);
+
+    // Total Skor AI
+    let finalScore = Math.round(lineSmoothnessScore + colorVarietyScore + completenessScore);
+
+    // Batasi Rentang Maksimal & Minimal Realistis (15% - 96%)
+    finalScore = Math.max(15, Math.min(96, finalScore));
+
+    // Feedback Otomatis AI berdasarkan Akurasi
     let feedback = "";
-
-    if (coloredPixels < 100) {
-        score = Math.floor(Math.random() * 15) + 5;
-        feedback = "AI Penilai: Gambar terlalu kosong atau hampir tidak ada goresan sama sekali. Tingkatkan kreativitasmu!";
+    if (finalScore >= 80) {
+        feedback = "AI Penilai: Sangat Rapi! Garis sangat mulus, warna bersih, dan bentuk objek tergambar sangat utuh.";
+    } else if (finalScore >= 55) {
+        feedback = "AI Penilai: Cukup Bagus. Pewarnaan lumayan bersih, tetapi beberapa garis masih terlihat bengkok/kurang stabil.";
     } else {
-        let densityScore = Math.min(50, (densityRatio * 200)); 
-        let colorScore = Math.min(50, (colorVariety * 1.5));
-        
-        score = Math.round(densityScore + colorScore);
-        score = Math.min(98, Math.max(25, score));
-
-        if (score >= 80) {
-            feedback = "AI Penilai: Luar biasa! Goresan sangat rapi, kaya warna, dan bentuk objek terlihat sangat jelas dan kreatif.";
-        } else if (score >= 50) {
-            feedback = "AI Penilai: Cukup bagus. Komposisi warna sudah lumayan, tetapi detail bentuk bisa ditingkatkan lagi agar lebih sempurna.";
-        } else {
-            feedback = "AI Penilai: Kurang rapi. Goresan masih terlalu minim dan perpaduan warna kurang dieksplorasi.";
-        }
+        feedback = "AI Penilai: Kurang Rapi. Garis gambar terlihat kasar/banyak bengkokan dan area gambar kurang terisi sempurna.";
     }
 
-    return { score: `${score}%`, desc: feedback };
+    return { score: `${finalScore}%`, desc: feedback };
 }
 
 function startTimer() {
@@ -602,7 +644,6 @@ function triggerSelesaiButton() {
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
-        // ✨ DENGAN NAMA SISWA SPESIFIK SESUAI REQUEST
         document.getElementById('turn-alert-msg').textContent = `Giliran Berikutnya ${studentsList[nextIndex].name}..`;
         document.getElementById('turn-alert-overlay').style.display = 'flex';
     } else {
@@ -677,7 +718,6 @@ function getNextValidIndex(idx) {
     return idx;
 }
 
-// ✨ PENAMBAHAN NILAI AI DI SAMPING NAMA PADA SIDEBAR
 function renderSidebarList() {
     const studentListEl = document.getElementById('student-list');
     studentListEl.innerHTML = '';
@@ -691,7 +731,6 @@ function renderSidebarList() {
         if (stu.skipped) {
             statusBadge = '<span class="student-status status-skipped">Absen</span>';
         } else if (data && data.score) {
-            // ✨ DITAMPILKAN NILAI (Contoh: 82%) langsung di samping kanan nama
             statusBadge = `<span class="student-status status-done">${data.score}</span>`;
         } else if (idx === currentIndex && isGameActive) {
             statusBadge = '<span class="student-status status-active">Aktif</span>';
