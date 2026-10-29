@@ -73,7 +73,6 @@ body {
 
 .modal-body img {
     max-width: 100%;
-    max-height: 60vh;
     border-radius: 8px;
     border: 2px solid #334155;
     background-color: #ffffff;
