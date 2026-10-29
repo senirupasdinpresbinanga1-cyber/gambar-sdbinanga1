@@ -10,7 +10,7 @@ let currentIndex = 0;
 let countdown;
 let timeLeft = 180; // 3 Menit
 let isGameActive = false;
-let adminInterval = null; // Variabel pengatur interval auto-refresh admin
+let adminInterval = null;
 
 const packagesData = {
     hewan: [
@@ -53,7 +53,7 @@ const availablePalette = [
     "#6B8E23", "#9932CC"
 ];
 
-// --- LOGIN ADMIN & DASHBOARD DENGAN AUTO-REFRESH SETIAP 1 DETIK ---
+// --- LOGIN ADMIN & KONTROL SISTEM ---
 function openAdminLoginModal() {
     document.getElementById('admin-login-modal').style.display = 'flex';
     document.getElementById('admin-user-input').value = '';
@@ -81,18 +81,49 @@ function openAdminDashboard() {
     document.getElementById('admin-dashboard-page').style.display = 'flex';
     switchAdminClass(selectedClass);
 
-    // Aktifkan auto-refresh data database admin setiap 1 detik
     if (adminInterval) clearInterval(adminInterval);
     adminInterval = setInterval(() => {
-        fetchAdminDatabaseData(true); // true agar berjalan di background tanpa mengganggu interaksi
+        fetchAdminDatabaseData(true);
+        updateAdminControlPanel();
     }, 1000);
 }
 
 function logoutAdmin() {
     document.getElementById('admin-dashboard-page').style.display = 'none';
     if (adminInterval) {
-        clearInterval(adminInterval); // Matikan interval saat admin keluar
+        clearInterval(adminInterval);
         adminInterval = null;
+    }
+}
+
+function updateAdminControlPanel() {
+    const playerEl = document.getElementById('admin-current-player');
+    const objekEl = document.getElementById('admin-current-objek');
+
+    if (isGameActive && studentsList[currentIndex]) {
+        playerEl.textContent = studentsList[currentIndex].name;
+        objekEl.textContent = studentsList[currentIndex].chosenItem || "Sedang memilih...";
+    } else {
+        playerEl.textContent = "- (Sesi Belum Mulai)";
+        objekEl.textContent = "-";
+    }
+}
+
+// 🎮 AKSI ADMIN: SKIP, RESET, DAN ANALISIS AI
+function adminAction(actionType) {
+    if (!isGameActive) {
+        alert("Sesi menggambar sedang tidak berjalan!");
+        return;
+    }
+
+    if (actionType === 'finish') {
+        triggerSelesaiButton();
+    } else if (actionType === 'skip') {
+        skipCurrentStudent();
+    } else if (actionType === 'reset') {
+        if (confirm("Apakah Anda yakin ingin mereset sesi menggambar?")) {
+            location.reload();
+        }
     }
 }
 
@@ -142,18 +173,6 @@ async function fetchAdminDatabaseData(isBackground = false) {
             });
         } catch(e) {
             console.error("Gagal sinkronisasi admin:", e);
-        }
-    } else {
-        if (!isBackground) {
-            tbody.innerHTML = `
-                <tr>
-                    <td>Abid</td>
-                    <td>Kucing</td>
-                    <td><strong style="color: #38bdf8;">82%</strong></td>
-                    <td>29/10/2026, 09.56.58</td>
-                    <td><button class="btn btn-glow btn-sm"><i class="fas fa-image"></i> Buka Hasil Gambar</button></td>
-                </tr>
-            `;
         }
     }
 }
