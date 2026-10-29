@@ -10,7 +10,7 @@ let currentIndex = 0;
 let countdown;
 let timeLeft = 180; // 3 Menit
 let isGameActive = false;
-let adminInterval = null;
+let adminInterval = null; // Variabel pengatur interval auto-refresh admin
 
 const packagesData = {
     hewan: [
@@ -53,7 +53,7 @@ const availablePalette = [
     "#6B8E23", "#9932CC"
 ];
 
-// --- LOGIN ADMIN ---
+// --- LOGIN ADMIN & DASHBOARD DENGAN AUTO-REFRESH SETIAP 1 DETIK ---
 function openAdminLoginModal() {
     document.getElementById('admin-login-modal').style.display = 'flex';
     document.getElementById('admin-user-input').value = '';
@@ -81,48 +81,18 @@ function openAdminDashboard() {
     document.getElementById('admin-dashboard-page').style.display = 'flex';
     switchAdminClass(selectedClass);
 
+    // Aktifkan auto-refresh data database admin setiap 1 detik
     if (adminInterval) clearInterval(adminInterval);
     adminInterval = setInterval(() => {
-        fetchAdminDatabaseData(true);
-        updateAdminControlPanel();
+        fetchAdminDatabaseData(true); // true agar berjalan di background tanpa mengganggu interaksi
     }, 1000);
 }
 
 function logoutAdmin() {
     document.getElementById('admin-dashboard-page').style.display = 'none';
     if (adminInterval) {
-        clearInterval(adminInterval);
+        clearInterval(adminInterval); // Matikan interval saat admin keluar
         adminInterval = null;
-    }
-}
-
-function updateAdminControlPanel() {
-    const playerEl = document.getElementById('admin-current-player');
-    const objekEl = document.getElementById('admin-current-objek');
-
-    if (isGameActive && studentsList[currentIndex]) {
-        playerEl.textContent = studentsList[currentIndex].name;
-        objekEl.textContent = studentsList[currentIndex].chosenItem || "Memilih Objek...";
-    } else {
-        playerEl.textContent = "- (Sesi Belum Mulai)";
-        objekEl.textContent = "-";
-    }
-}
-
-function adminAction(actionType) {
-    if (!isGameActive) {
-        alert("Sesi menggambar sedang tidak berjalan!");
-        return;
-    }
-
-    if (actionType === 'finish') {
-        triggerSelesaiButton();
-    } else if (actionType === 'skip') {
-        skipCurrentStudent();
-    } else if (actionType === 'reset') {
-        if (confirm("Apakah Anda yakin ingin mereset sesi menggambar?")) {
-            location.reload();
-        }
     }
 }
 
@@ -130,6 +100,7 @@ function switchAdminClass(kelas) {
     adminSelectedClass = kelas;
     document.getElementById('admin-btn-6a').classList.toggle('active', kelas === '6A');
     document.getElementById('admin-btn-6b').classList.toggle('active', kelas === '6B');
+
     fetchAdminDatabaseData(false);
 }
 
@@ -171,6 +142,18 @@ async function fetchAdminDatabaseData(isBackground = false) {
             });
         } catch(e) {
             console.error("Gagal sinkronisasi admin:", e);
+        }
+    } else {
+        if (!isBackground) {
+            tbody.innerHTML = `
+                <tr>
+                    <td>Abid</td>
+                    <td>Kucing</td>
+                    <td><strong style="color: #38bdf8;">82%</strong></td>
+                    <td>29/10/2026, 09.56.58</td>
+                    <td><button class="btn btn-glow btn-sm"><i class="fas fa-image"></i> Buka Hasil Gambar</button></td>
+                </tr>
+            `;
         }
     }
 }
@@ -330,7 +313,6 @@ function undoCanvas() {
     }
 }
 
-// 1️⃣ Tampilkan pop-up "Giliran Berikutnya..." terlebih dahulu
 function promptStudentChoice() {
     if (currentIndex >= studentsList.length) {
         isGameActive = false;
@@ -345,15 +327,6 @@ function promptStudentChoice() {
         return;
     }
 
-    document.getElementById('turn-alert-msg').innerHTML = `Giliran Berikutnya <strong style="color:#38bdf8;">${student.name}..</strong>`;
-    document.getElementById('turn-alert-overlay').style.display = 'flex';
-}
-
-// 2️⃣ Setelah tombol di alert giliran diklik, buka modal pemilihan objek & tombol "Mulai Menggambar"
-document.getElementById('turn-alert-overlay').querySelector('button').onclick = () => {
-    document.getElementById('turn-alert-overlay').style.display = 'none';
-    
-    const student = studentsList[currentIndex];
     document.getElementById('modal-student-name').textContent = student.name;
     document.getElementById('modal-package-name').textContent = selectedPackageKey.toUpperCase();
     
@@ -379,9 +352,8 @@ document.getElementById('turn-alert-overlay').querySelector('button').onclick = 
 
     document.getElementById('custom-item-input').value = "";
     document.getElementById('student-choice-modal').style.display = 'flex';
-};
+}
 
-// 3️⃣ Saat tombol "Mulai Menggambar" diklik di modal pemilihan objek
 function confirmStudentChoice() {
     const customInput = document.getElementById('custom-item-input').value.trim();
     const selectEl = document.getElementById('package-item-select').value;
@@ -663,8 +635,18 @@ function handleTimeUp() {
     saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Waktu Habis");
 
     renderSidebarList();
-    document.getElementById('game-panel').classList.add('hidden');
 
+    const nextIndex = getNextValidIndex(currentIndex + 1);
+    if (nextIndex < studentsList.length) {
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Giliran Berikutnya <strong style="color:#38bdf8;">${studentsList[nextIndex].name}..</strong>`;
+    } else {
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
+    }
+    document.getElementById('timeup-overlay').style.display = 'flex';
+}
+
+function proceedNextAfterTimeUp() {
+    document.getElementById('timeup-overlay').style.display = 'none';
     currentIndex++;
     promptStudentChoice();
 }
@@ -688,12 +670,19 @@ function triggerSelesaiButton() {
 
     renderSidebarList();
 
-    currentIndex++;
-    if (currentIndex < studentsList.length) {
-        promptStudentChoice();
+    const nextIndex = getNextValidIndex(currentIndex + 1);
+    if (nextIndex < studentsList.length) {
+        document.getElementById('turn-alert-msg').textContent = `Giliran Berikutnya ${studentsList[nextIndex].name}..`;
+        document.getElementById('turn-alert-overlay').style.display = 'flex';
     } else {
         endAllTurns();
     }
+}
+
+function closeTurnAlert() {
+    document.getElementById('turn-alert-overlay').style.display = 'none';
+    currentIndex++;
+    promptStudentChoice();
 }
 
 function skipCurrentStudent() {
@@ -706,12 +695,17 @@ function skipCurrentStudent() {
 
     renderSidebarList();
 
-    currentIndex++;
-    if (currentIndex < studentsList.length) {
+    const nextIndex = getNextValidIndex(currentIndex + 1);
+    if (nextIndex < studentsList.length) {
+        currentIndex++;
         promptStudentChoice();
     } else {
         endAllTurns();
     }
+}
+
+function confirmStop() {
+    location.reload();
 }
 
 function saveStudentScoreToDatabase(student, imageBase64, scoreVal, statusVal) {
@@ -737,7 +731,11 @@ function saveStudentScoreToDatabase(student, imageBase64, scoreVal, statusVal) {
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
-        }).catch(err => console.error("Gagal simpan data:", err));
+        }).then(() => {
+            console.log(`Nilai AI & Gambar ${student.name} tersimpan ke database.`);
+        }).catch(err => {
+            console.error("Gagal simpan data:", err);
+        });
     }
 }
 
