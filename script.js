@@ -8,9 +8,9 @@ let studentResults = {};
 let takenObjects = [];
 let currentIndex = 0;
 let countdown;
-let timeLeft = 180; // 3 Menit
+let timeLeft = 180;
 let isGameActive = false;
-let adminInterval = null; // Variabel pengatur interval auto-refresh admin
+let adminInterval = null;
 
 const packagesData = {
     hewan: [
@@ -34,7 +34,6 @@ const packagesData = {
     ]
 };
 
-// Canvas Drawing States
 let canvas, ctx;
 let isDrawing = false;
 let currentTool = "brush"; 
@@ -53,7 +52,6 @@ const availablePalette = [
     "#6B8E23", "#9932CC"
 ];
 
-// --- LOGIN ADMIN & DASHBOARD DENGAN AUTO-REFRESH SETIAP 1 DETIK ---
 function openAdminLoginModal() {
     document.getElementById('admin-login-modal').style.display = 'flex';
     document.getElementById('admin-user-input').value = '';
@@ -81,17 +79,16 @@ function openAdminDashboard() {
     document.getElementById('admin-dashboard-page').style.display = 'flex';
     switchAdminClass(selectedClass);
 
-    // Aktifkan auto-refresh data database admin setiap 1 detik
     if (adminInterval) clearInterval(adminInterval);
     adminInterval = setInterval(() => {
-        fetchAdminDatabaseData(true); // true agar berjalan di background tanpa mengganggu interaksi
+        fetchAdminDatabaseData(true);
     }, 1000);
 }
 
 function logoutAdmin() {
     document.getElementById('admin-dashboard-page').style.display = 'none';
     if (adminInterval) {
-        clearInterval(adminInterval); // Matikan interval saat admin keluar
+        clearInterval(adminInterval);
         adminInterval = null;
     }
 }
@@ -100,7 +97,6 @@ function switchAdminClass(kelas) {
     adminSelectedClass = kelas;
     document.getElementById('admin-btn-6a').classList.toggle('active', kelas === '6A');
     document.getElementById('admin-btn-6b').classList.toggle('active', kelas === '6B');
-
     fetchAdminDatabaseData(false);
 }
 
@@ -143,18 +139,24 @@ async function fetchAdminDatabaseData(isBackground = false) {
         } catch(e) {
             console.error("Gagal sinkronisasi admin:", e);
         }
-    } else {
-        if (!isBackground) {
-            tbody.innerHTML = `
-                <tr>
-                    <td>Abid</td>
-                    <td>Kucing</td>
-                    <td><strong style="color: #38bdf8;">82%</strong></td>
-                    <td>29/10/2026, 09.56.58</td>
-                    <td><button class="btn btn-glow btn-sm"><i class="fas fa-image"></i> Buka Hasil Gambar</button></td>
-                </tr>
-            `;
-        }
+    }
+}
+
+// FUNGSI KONTROL JARAK JAUH ADMIN: SKIP & RESET
+function adminSkipStudent() {
+    if (!isGameActive) {
+        alert("Sesi menggambar belum dimulai!");
+        return;
+    }
+    if (confirm("Yakin ingin melakukan SKIP (Absen) pada siswa ini dari panel admin?")) {
+        skipCurrentStudent();
+        alert("Perintah Skip berhasil dijalankan.");
+    }
+}
+
+function adminResetSession() {
+    if (confirm("Yakin ingin melakukan RESET (Mulai Ulang Sesi) dari panel admin?")) {
+        location.reload();
     }
 }
 
@@ -222,7 +224,6 @@ function setupStudentUI(rawNames) {
 }
 
 fetchStudentsFromDatabase();
-
 document.getElementById('start-btn').addEventListener('click', startEntireGame);
 
 function shuffleArray(array) {
@@ -247,11 +248,7 @@ function startEntireGame() {
     let randomizedNames = shuffleArray(names);
 
     studentsList = randomizedNames.map((name) => {
-        return { 
-            name: name, 
-            chosenItem: "",
-            skipped: false
-        };
+        return { name: name, chosenItem: "", skipped: false };
     });
 
     currentIndex = 0;
@@ -339,7 +336,7 @@ function promptStudentChoice() {
     if (availableItems.length === 0) {
         let opt = document.createElement('option');
         opt.value = "";
-        opt.textContent = "Semua objek di paket ini sudah habis! (Ketik sendiri di bawah)";
+        opt.textContent = "Semua objek habis! (Ketik sendiri di bawah)";
         selectEl.appendChild(opt);
     } else {
         availableItems.forEach(item => {
@@ -484,15 +481,11 @@ function floodFill(startX, startY, fillColor) {
 
     const queue = [[startX, startY]];
     const matchedColor = (r, g, b, a) => {
-        return Math.abs(r - startR) < 30 && 
-               Math.abs(g - startG) < 30 && 
-               Math.abs(b - startB) < 30 && 
-               Math.abs(a - startA) < 30;
+        return Math.abs(r - startR) < 30 && Math.abs(g - startG) < 30 && Math.abs(b - startB) < 30 && Math.abs(a - startA) < 30;
     };
 
     while (queue.length > 0) {
         const [x, y] = queue.pop();
-
         if (x < 0 || x >= width || y < 0 || y >= height) continue;
 
         let westX = x;
@@ -529,11 +522,9 @@ function floodFill(startX, startY, fillColor) {
             }
         }
     }
-
     ctx.putImageData(imgData, 0, 0);
 }
 
-// 🎯 SISTEM PENILAIAN AI PRESISI & AKURAT (0% - 100%)
 function evaluateDrawingWithAI() {
     const width = canvas.width;
     const height = canvas.height;
@@ -544,8 +535,8 @@ function evaluateDrawingWithAI() {
     let nonWhitePixels = 0;
     let edgeTransitions = 0; 
     let uniqueColors = new Set();
-
     let grid = new Array(height);
+
     for (let y = 0; y < height; y++) {
         grid[y] = new Uint8Array(width);
     }
@@ -586,9 +577,7 @@ function evaluateDrawingWithAI() {
     }
 
     let jaggedRatio = edgeTransitions / nonWhitePixels;
-    let lineSmoothnessScore = 50 - (jaggedRatio * 180);
-    lineSmoothnessScore = Math.max(5, Math.min(50, lineSmoothnessScore));
-
+    let lineSmoothnessScore = Math.max(5, Math.min(50, 50 - (jaggedRatio * 180)));
     let fillRatio = nonWhitePixels / totalPixels;
     let colorVarietyScore = Math.min(25, uniqueColors.size * 5);
     let completenessScore = Math.min(25, fillRatio * 350);
@@ -596,14 +585,9 @@ function evaluateDrawingWithAI() {
     let finalScore = Math.round(lineSmoothnessScore + colorVarietyScore + completenessScore);
     finalScore = Math.max(5, Math.min(96, finalScore));
 
-    let feedback = "";
-    if (finalScore >= 80) {
-        feedback = "AI Penilai: Sangat Rapi! Garis halus terjaga, warna bersih dan tertutup sempurna.";
-    } else if (finalScore >= 55) {
-        feedback = "AI Penilai: Cukup Bagus. Pewarnaan lumayan bersih, tetapi beberapa bagian garis masih agak bengkok.";
-    } else {
-        feedback = "AI Penilai: Kurang Rapi. Terlalu banyak bengkokan pada garis dan goresan kurang stabil.";
-    }
+    let feedback = finalScore >= 80 ? "AI Penilai: Sangat Rapi! Garis halus terjaga, warna bersih dan tertutup sempurna." :
+                   finalScore >= 55 ? "AI Penilai: Cukup Bagus. Pewarnaan lumayan bersih, tetapi beberapa bagian garis masih agak bengkok." :
+                   "AI Penilai: Kurang Rapi. Terlalu banyak bengkokan pada garis dan goresan kurang stabil.";
 
     return { score: `${finalScore}%`, desc: feedback };
 }
@@ -633,7 +617,6 @@ function handleTimeUp() {
         status: "Waktu Habis (Dinilai AI)" 
     };
     saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Waktu Habis");
-
     renderSidebarList();
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
@@ -667,7 +650,6 @@ function triggerSelesaiButton() {
     
     saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Selesai");
     document.getElementById('game-panel').classList.add('hidden');
-
     renderSidebarList();
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
@@ -692,7 +674,6 @@ function skipCurrentStudent() {
     studentResults[student.name] = { item: "-", imageData: null, score: "0%", desc: "Siswa absen atau tidak hadir.", status: "Tidak Hadir (Skipped)" };
     saveStudentScoreToDatabase(student, "", "0%", "Tidak Hadir (Skipped)");
     document.getElementById('game-panel').classList.add('hidden');
-
     renderSidebarList();
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
@@ -702,10 +683,6 @@ function skipCurrentStudent() {
     } else {
         endAllTurns();
     }
-}
-
-function confirmStop() {
-    location.reload();
 }
 
 function saveStudentScoreToDatabase(student, imageBase64, scoreVal, statusVal) {
@@ -731,11 +708,7 @@ function saveStudentScoreToDatabase(student, imageBase64, scoreVal, statusVal) {
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
-        }).then(() => {
-            console.log(`Nilai AI & Gambar ${student.name} tersimpan ke database.`);
-        }).catch(err => {
-            console.error("Gagal simpan data:", err);
-        });
+        }).catch(err => console.error("Gagal simpan data:", err));
     }
 }
 
@@ -753,8 +726,8 @@ function renderSidebarList() {
         const li = document.createElement('li');
         li.className = `student-item ${idx === currentIndex && isGameActive ? 'active' : ''}`;
         
-        const data = studentResults[stu.name];
         let statusBadge = '<span class="student-status status-pending">Belum</span>';
+        const data = studentResults[stu.name];
         
         if (stu.skipped) {
             statusBadge = '<span class="student-status status-skipped">Absen</span>';
@@ -777,7 +750,7 @@ function endAllTurns() {
     document.getElementById('finish-panel').classList.remove('hidden');
     renderSidebarList();
 
-    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh nilai AI dan gambar siswa tersimpan di Google Spreadsheet (Sheet Data_${selectedClass})[cite: 2, 3].`;
+    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh nilai AI tersimpan di Google Spreadsheet (Sheet Data_${selectedClass})[cite: 2, 3].`;
 
     const tbody = document.getElementById('result-table-body');
     tbody.innerHTML = '';
