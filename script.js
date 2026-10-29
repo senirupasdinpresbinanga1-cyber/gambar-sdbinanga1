@@ -142,7 +142,6 @@ async function fetchAdminDatabaseData(isBackground = false) {
     }
 }
 
-// FUNGSI KONTROL JARAK JAUH ADMIN: SKIP & RESET
 function adminSkipStudent() {
     if (!isGameActive) {
         alert("Sesi menggambar belum dimulai!");
@@ -258,6 +257,8 @@ function startEntireGame() {
     
     document.getElementById('setup-panel').classList.add('hidden');
     document.getElementById('finish-panel').classList.add('hidden');
+    document.getElementById('app-header-el').classList.add('hidden');
+    document.getElementById('top-nav-admin').classList.add('hidden');
     
     initCanvas();
     renderPaletteGrid();
@@ -265,30 +266,62 @@ function startEntireGame() {
     promptStudentChoice();
 }
 
+// FUNGSI UTAMA KOREKSI KOORDINAT MOUSE & TOUCH AGAR AKURAT 1:1
+function getCanvasCoordinates(e) {
+    const rect = canvas.getBoundingClientRect();
+    // Skala perbandingan antara resolusi internal canvas (width/height) dengan ukuran CSS di layar
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    let clientX = e.clientX;
+    let clientY = e.clientY;
+
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    }
+
+    return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+    };
+}
+
 function initCanvas() {
     canvas = document.getElementById('drawing-canvas');
     ctx = canvas.getContext('2d');
 
-    canvas.onmousedown = handleCanvasDown;
-    canvas.onmousemove = draw;
-    canvas.onmouseup = stopDrawing;
-    canvas.onmouseleave = stopDrawing;
+    // Event Mouse Desktop
+    canvas.onmousedown = (e) => {
+        e.preventDefault();
+        handleCanvasDown(e);
+    };
+    canvas.onmousemove = (e) => {
+        e.preventDefault();
+        draw(e);
+    };
+    canvas.onmouseup = (e) => {
+        e.preventDefault();
+        stopDrawing();
+    };
+    canvas.onmouseleave = (e) => {
+        stopDrawing();
+    };
 
+    // Event Touch HP / Tablet
     canvas.ontouchstart = (e) => {
         e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent("mousedown", { clientX: touch.clientX, clientY: touch.clientY });
-        canvas.dispatchEvent(mouseEvent);
+        const coords = getCanvasCoordinates(e);
+        handleCanvasDown(coords);
     };
     canvas.ontouchmove = (e) => {
         e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
-        canvas.dispatchEvent(mouseEvent);
+        const coords = getCanvasCoordinates(e);
+        draw(coords);
     };
-    canvas.ontouchend = () => {
-        const mouseEvent = new MouseEvent("mouseup", {});
-        canvas.dispatchEvent(mouseEvent);
+    canvas.ontouchend = (e) => {
+        e.preventDefault();
+        stopDrawing();
     };
 }
 
@@ -380,26 +413,32 @@ function confirmStudentChoice() {
 }
 
 function handleCanvasDown(e) {
+    const coords = getCanvasCoordinates(e);
+
     if (currentTool === "fill") {
         saveUndoState();
-        const rect = canvas.getBoundingClientRect();
-        const x = Math.floor(e.clientX - rect.left);
-        const y = Math.floor(e.clientY - rect.top);
-        floodFill(x, y, hexToRgba(currentColor));
+        floodFill(Math.floor(coords.x), Math.floor(coords.y), hexToRgba(currentColor));
         return;
     }
 
     isDrawing = true;
     saveUndoState();
-    draw(e);
+    
+    // Mulai jalur garis baru pas di titik kursor
+    ctx.beginPath();
+    ctx.moveTo(coords.x, coords.y);
+    // Buat titik kecil agar klik sekali langsung menghasilkan titik sempurna di tengah kursor
+    ctx.lineWidth = currentBrushSize;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = (currentTool === "eraser") ? "#ffffff" : currentColor;
+    ctx.lineTo(coords.x + 0.1, coords.y + 0.1);
+    ctx.stroke();
 }
 
 function draw(e) {
     if (!isDrawing || currentTool === "fill") return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = getCanvasCoordinates(e);
 
     ctx.lineWidth = currentBrushSize;
     ctx.lineCap = "round";
@@ -411,13 +450,14 @@ function draw(e) {
         ctx.strokeStyle = currentColor;
     }
 
-    ctx.lineTo(x, y);
+    ctx.lineTo(coords.x, coords.y);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.moveTo(coords.x, coords.y);
 }
 
 function stopDrawing() {
+    if (!isDrawing) return;
     isDrawing = false;
     ctx.beginPath();
 }
@@ -787,6 +827,8 @@ function closeImageModal() {
 document.getElementById('restart-btn').onclick = () => {
     document.getElementById('finish-panel').classList.add('hidden');
     document.getElementById('setup-panel').classList.remove('hidden');
+    document.getElementById('app-header-el').classList.remove('hidden');
+    document.getElementById('top-nav-admin').classList.remove('hidden');
     fetchStudentsFromDatabase();
 };
 
