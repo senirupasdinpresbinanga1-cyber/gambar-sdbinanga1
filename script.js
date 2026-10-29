@@ -653,7 +653,7 @@ function handleTimeUp() {
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
         // PERBAIKAN: Menghapus tulisan "Giliran Berikutnya" yang dobel dan membuat nama jadi warna hijau
-        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br><span class="green-name">${studentsList[nextIndex].name}..</span>`;
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br><span style="color: #10b981; font-weight: bold; font-size: 18px;">${studentsList[nextIndex].name}..</span>`;
     } else {
         document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
     }
@@ -687,7 +687,7 @@ function triggerSelesaiButton() {
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
         // PERBAIKAN: Menghapus tulisan "Giliran Berikutnya" yang dobel dan membuat nama jadi warna hijau
-        document.getElementById('turn-alert-msg').innerHTML = `<span class="green-name">${studentsList[nextIndex].name}..</span>`;
+        document.getElementById('turn-alert-msg').innerHTML = `<span style="color: #10b981; font-weight: bold; font-size: 18px;">${studentsList[nextIndex].name}..</span>`;
         document.getElementById('turn-alert-overlay').style.display = 'flex';
     } else {
         endAllTurns();
