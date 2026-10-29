@@ -266,10 +266,8 @@ function startEntireGame() {
     promptStudentChoice();
 }
 
-// FUNGSI UTAMA KOREKSI KOORDINAT MOUSE & TOUCH AGAR AKURAT 1:1
 function getCanvasCoordinates(e) {
     const rect = canvas.getBoundingClientRect();
-    // Skala perbandingan antara resolusi internal canvas (width/height) dengan ukuran CSS di layar
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
@@ -291,7 +289,6 @@ function initCanvas() {
     canvas = document.getElementById('drawing-canvas');
     ctx = canvas.getContext('2d');
 
-    // Event Mouse Desktop
     canvas.onmousedown = (e) => {
         e.preventDefault();
         handleCanvasDown(e);
@@ -308,7 +305,6 @@ function initCanvas() {
         stopDrawing();
     };
 
-    // Event Touch HP / Tablet
     canvas.ontouchstart = (e) => {
         e.preventDefault();
         const coords = getCanvasCoordinates(e);
@@ -364,12 +360,13 @@ function promptStudentChoice() {
     selectEl.innerHTML = '';
     
     let items = packagesData[selectedPackageKey] || [];
+    // MENYARING OBJEK YANG SUDAH DIAMBIL SISWA LAIN
     let availableItems = items.filter(item => !takenObjects.includes(item.toLowerCase()));
 
     if (availableItems.length === 0) {
         let opt = document.createElement('option');
         opt.value = "";
-        opt.textContent = "Semua objek habis! (Ketik sendiri di bawah)";
+        opt.textContent = "Semua objek di paket ini sudah diambil siswa lain!";
         selectEl.appendChild(opt);
     } else {
         availableItems.forEach(item => {
@@ -380,28 +377,26 @@ function promptStudentChoice() {
         });
     }
 
-    document.getElementById('custom-item-input').value = "";
     document.getElementById('student-choice-modal').style.display = 'flex';
 }
 
 function confirmStudentChoice() {
-    const customInput = document.getElementById('custom-item-input').value.trim();
     const selectEl = document.getElementById('package-item-select').value;
     
-    let chosen = customInput !== "" ? customInput : selectEl;
-    if (!chosen) {
-        alert("Silakan pilih atau ketik objek gambar terlebih dahulu!");
+    if (!selectEl) {
+        alert("Semua objek dalam paket ini sudah habis diambil!");
         return;
     }
 
-    takenObjects.push(chosen.trim().toLowerCase());
-    studentsList[currentIndex].chosenItem = chosen;
+    // CATAT OBJEK YANG DIPILIH SISWA AGAR OTOMATIS HILANG DI SISWA BERIKUTNYA
+    takenObjects.push(selectEl.trim().toLowerCase());
+    studentsList[currentIndex].chosenItem = selectEl;
 
     document.getElementById('student-choice-modal').style.display = 'none';
     document.getElementById('game-panel').classList.remove('hidden');
 
     document.getElementById('current-player').textContent = studentsList[currentIndex].name;
-    document.getElementById('target-soal-badge').textContent = `Objek: ${chosen}`;
+    document.getElementById('target-soal-badge').textContent = `Objek: ${selectEl}`;
 
     undoStack = [];
     clearCanvas();
@@ -424,10 +419,8 @@ function handleCanvasDown(e) {
     isDrawing = true;
     saveUndoState();
     
-    // Mulai jalur garis baru pas di titik kursor
     ctx.beginPath();
     ctx.moveTo(coords.x, coords.y);
-    // Buat titik kecil agar klik sekali langsung menghasilkan titik sempurna di tengah kursor
     ctx.lineWidth = currentBrushSize;
     ctx.lineCap = "round";
     ctx.strokeStyle = (currentTool === "eraser") ? "#ffffff" : currentColor;
