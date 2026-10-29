@@ -142,25 +142,22 @@ async function fetchAdminDatabaseData(isBackground = false) {
     }
 }
 
-// PERBAIKAN: Tombol Reset Sesi dari Admin sekarang mereset alur permainan siswa tanpa keluar dari panel admin
+// PERBAIKAN: Tombol Reset Sesi dari Admin mereset alur permainan siswa ke halaman utama tanpa menutup panel admin
 function adminResetSession() {
     if (confirm("Yakin ingin melakukan RESET (Mulai Ulang Sesi Siswa)?")) {
         clearInterval(countdown);
         isGameActive = false;
         
-        // Sembunyikan panel game/finish jika sedang terbuka di layar utama
         document.getElementById('game-panel').classList.add('hidden');
         document.getElementById('finish-panel').classList.add('hidden');
         document.getElementById('setup-panel').classList.remove('hidden');
         document.getElementById('app-header-el').classList.remove('hidden');
         document.getElementById('top-nav-admin').classList.remove('hidden');
         
-        // Reset state variabel permainan
         currentIndex = 0;
         studentResults = {};
         takenObjects = [];
         
-        // Muat ulang daftar siswa
         fetchStudentsFromDatabase();
         alert("Sesi siswa berhasil direset ke halaman awal.");
     }
@@ -610,14 +607,13 @@ function evaluateDrawingWithAI() {
     // 2. PENGAMAN NILAI: Kondisi Gambar - Objek utama belum lengkap (Nilai dibatasi maksimal 50)
     let fillRatio = nonWhitePixels / totalPixels;
     if (fillRatio < 0.04) {
-        let limitedScore = Math.floor(Math.random() * 15) + 35; // Batas max 50
+        let limitedScore = Math.floor(Math.random() * 15) + 35; 
         return {
             score: `${limitedScore}%`,
             desc: "AI Penilai (Pengaman Nilai): Objek utama belum lengkap. Nilai dibatasi maksimal 50."
         };
     }
 
-    // Hitung detail tepi & kehalusan garis untuk kerapian
     for (let y = 1; y < height - 1; y += 2) {
         for (let x = 1; x < width - 1; x += 2) {
             if (grid[y][x] === 1) {
@@ -631,7 +627,6 @@ function evaluateDrawingWithAI() {
 
     let jaggedRatio = edgeTransitions / nonWhitePixels;
 
-    // Komponen Penilaian Berdasarkan Bobot:
     let objCompleteness = Math.min(30, (fillRatio * 150));
     let cleanlinessScore = Math.max(5, Math.min(25, 25 - (jaggedRatio * 50)));
     let harmonyScore = Math.min(25, uniqueColors.size * 3.5);
@@ -733,7 +728,7 @@ function closeTurnAlert() {
     promptStudentChoice();
 }
 
-// Tombol Skip Siswa Absen dipindahkan ke halaman mengambar (game-panel)
+// Tombol Skip Siswa Absen langsung dari halaman menggambar (game-panel)
 function skipCurrentStudent() {
     if (!confirm("Yakin ingin menandai siswa ini absen / tidak hadir (skip)?")) return;
     clearInterval(countdown);
