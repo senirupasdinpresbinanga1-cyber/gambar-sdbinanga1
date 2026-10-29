@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Seni Rupa - Kanvas Menggambar Bebas & Timer</title>
+    <title>Seni Rupa - Kanvas Menggambar Bebas & Cat Otomatis</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -20,12 +20,32 @@
         </div>
     </div>
 
-    <!-- Time Up Overlay (Waktu Habis 2 Menit) -->
+    <!-- Time Up Overlay (Waktu Habis 3 Menit) -->
     <div id="timeup-overlay" class="full-overlay" style="display: none;">
         <div class="card timeup-card">
             <h2 style="margin-bottom: 10px; color: #f59e0b; font-size: 24px;"><i class="fas fa-hourglass-end"></i> Waktu Habis!</h2>
-            <p id="timeup-message" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Waktu menggambar 2 menit telah selesai.</p>
+            <p id="timeup-message" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Waktu menggambar 3 menit telah selesai.</p>
             <button class="btn btn-glow" onclick="proceedNextAfterTimeUp()" style="width: 100%; padding: 12px; font-size: 16px;">Lanjutkan <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Modal Pilih Judul Gambar untuk Siswa -->
+    <div id="student-choice-modal" class="full-overlay" style="display: none;">
+        <div class="card modal-card" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-book-open"></i> Pilih Objek Gambar</h3>
+            </div>
+            <div class="modal-body" style="text-align: left;">
+                <p style="font-size: 14px; color: #cbd5e1; margin-bottom: 10px;">Halo <strong id="modal-student-name" style="color: #38bdf8;">-</strong>, silakan pilih atau ketik nama objek yang ingin digambar dari paket <strong id="modal-package-name" style="color: #f59e0b;">-</strong>:</p>
+                
+                <label style="font-size: 13px; color: #94a3b8; display: block; margin-bottom: 5px;">Pilih dari daftar paket:</label>
+                <select id="package-item-select" class="btn-class" style="width: 100%; margin-bottom: 15px; text-align: left; background: #0f172a;"></select>
+                
+                <label style="font-size: 13px; color: #94a3b8; display: block; margin-bottom: 5px;">Atau ketik sendiri objeknya:</label>
+                <input type="text" id="custom-item-input" placeholder="Contoh: Kucing Anggora" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; margin-bottom: 20px;">
+
+                <button class="btn btn-glow" onclick="confirmStudentChoice()" style="width: 100%; padding: 12px;">Mulai Menggambar <i class="fas fa-play"></i></button>
+            </div>
         </div>
     </div>
 
@@ -34,7 +54,7 @@
         <div class="card warning-card" style="border-top: 5px solid #38bdf8;">
             <h2 id="turn-alert-title" style="margin-bottom: 12px; color: #0284c7; font-size: 22px;"><i class="fas fa-user-clock"></i> Giliran Berikutnya</h2>
             <p id="turn-alert-msg" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Selanjutnya giliran (Nama siswa)</p>
-            <button class="btn btn-glow" onclick="closeTurnAlert()" style="width: 100%; padding: 12px; font-size: 16px;">Mulai Menggambar <i class="fas fa-play"></i></button>
+            <button class="btn btn-glow" onclick="closeTurnAlert()" style="width: 100%; padding: 12px; font-size: 16px;">Lanjutkan <i class="fas fa-arrow-right"></i></button>
         </div>
     </div>
 
@@ -42,7 +62,7 @@
     <div id="image-modal" class="full-overlay" style="display: none;">
         <div class="card modal-card">
             <div class="modal-header">
-                <h3 id="modal-title"><i class="fas fa-palette"></i> Hasil Gambar</h3>
+                <h3 id="modal-preview-title"><i class="fas fa-palette"></i> Hasil Gambar</h3>
                 <button class="btn-close" onclick="closeImageModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -63,13 +83,13 @@
         <main class="app-container">
             <header class="app-header">
                 <h1>🎨 Seni Rupa <span id="header-class-badge" class="badge">Kelas 6A</span></h1>
-                <p>Kanvas Menggambar Bebas & Cat Warna (Batas 2 Menit)</p>
+                <p>Kanvas Menggambar Bebas & Cat Otomatis (3 Menit)</p>
             </header>
 
             <!-- Setup Panel -->
             <div id="setup-panel" class="glass-card">
                 <div class="setup-content">
-                    <h3>📜 Konfigurasi Sesi Menggambar</h3>
+                    <h3>📜 Konfigurasi Sesi Menggambar & Paket Soal</h3>
                     
                     <label class="setup-label">Pilih Kelas:</label>
                     <div class="class-selector-group">
@@ -77,10 +97,18 @@
                         <button class="btn-class" data-class="6B" onclick="selectClass('6B')">🏫 Kelas 6B</button>
                     </div>
 
+                    <label class="setup-label" style="margin-top: 15px;">Pilih Paket Kategori:</label>
+                    <div class="class-selector-group">
+                        <button class="btn-package active" data-package="hewan" onclick="selectPackage('hewan')">🐾 Nama Hewan (26)</button>
+                        <button class="btn-package" data-package="rumah" onclick="selectPackage('rumah')">🏠 Benda di Rumah (26)</button>
+                        <button class="btn-package" data-package="sekolah" onclick="selectPackage('sekolah')">🎒 Benda di Sekolah (26)</button>
+                    </div>
+
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`[cite: 1, 2].</li>
-                        <li>⏳ <strong>Batas Waktu:</strong> Setiap siswa memiliki waktu menggambar maksimal **120 detik (2 menit)**[cite: 3].</li>
-                        <li>⚡ <strong>Real-time Sync:</strong> Hasil karya gambar disimpan otomatis per siswa ke Google Spreadsheet[cite: 2, 3].</li>
+                        <li>🎯 <strong>Pilih Objek:</strong> Sebelum menggambar, setiap siswa memilih/mengetik objek gambar dari paket yang dipilih guru.</li>
+                        <li>⏳ <strong>Batas Waktu:</strong> Durasi menggambar adalah **180 detik (3 menit)** per siswa.</li>
+                        <li>🪣 <strong>Cat Otomatis (Fill):</strong> Gunakan alat "Cat Tumpah" untuk mewarnai area tertutup secara instan.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Sesi Menggambar (Fullscreen)</button>
                 </div>
@@ -92,14 +120,14 @@
                     <div class="info-item">
                         <span class="label">Pemain Saat Ini:</span>
                         <h2 id="current-player" class="highlight-name">-</h2>
-                        <span id="target-soal-badge" class="target-badge">Siswa 1</span>
+                        <span id="target-soal-badge" class="target-badge">Objek: -</span>
                     </div>
                     <div class="timer-display">
-                        ⏳ Sisa Waktu: <span id="timer">120</span> dtk
+                        ⏳ Sisa Waktu: <span id="timer">180</span> dtk
                     </div>
                     <div class="action-top-group">
-                        <button id="skip-student-btn" class="btn btn-warning btn-sm" onclick="skipCurrentStudent()"><i class="fas fa-user-slash"></i> Skip Siswa</button>
-                        <button id="stop-btn" class="btn btn-danger btn-sm" onclick="confirmStop()"><i class="fas fa-stop"></i> Reset Sesi</button>
+                        <button id="skip-student-btn" class="btn btn-warning btn-sm" onclick="skipCurrentStudent()"><i class="fas fa-user-slash"></i> Skip</button>
+                        <button id="stop-btn" class="btn btn-danger btn-sm" onclick="confirmStop()"><i class="fas fa-stop"></i> Reset</button>
                     </div>
                 </div>
 
@@ -107,10 +135,11 @@
                 <div class="drawing-toolbar">
                     <div class="tool-group">
                         <button id="tool-brush" class="btn-tool active" onclick="setTool('brush')"><i class="fas fa-paint-brush"></i> Kuas</button>
+                        <button id="tool-fill" class="btn-tool" onclick="setTool('fill')"><i class="fas fa-fill-drip"></i> Cat Tumpah</button>
                         <button id="tool-eraser" class="btn-tool" onclick="setTool('eraser')"><i class="fas fa-eraser"></i> Penghapus</button>
                     </div>
 
-                    <div class="tool-group">
+                    <div class="tool-group" id="brush-size-group">
                         <label for="brush-size">Ukuran:</label>
                         <input type="range" id="brush-size" min="2" max="50" value="5" oninput="updateBrushSize(this.value)">
                         <span id="brush-size-val">5px</span>
@@ -135,7 +164,7 @@
 
                 <!-- Canvas Work Area -->
                 <div class="canvas-wrapper">
-                    <canvas id="drawing-canvas" width="800" height="430"></canvas>
+                    <canvas id="drawing-canvas" width="800" height="420"></canvas>
                 </div>
 
                 <div class="tool-controls">
@@ -156,6 +185,7 @@
                             <tr>
                                 <th>No</th>
                                 <th>Nama Siswa</th>
+                                <th>Objek Gambar</th>
                                 <th>Status</th>
                                 <th>Hasil Gambar</th>
                             </tr>
@@ -163,7 +193,7 @@
                         <tbody id="result-table-body"></tbody>
                     </table>
                 </div>
-                <button id="restart-btn" class="btn btn-glow" style="margin-top: 15px; width:100%;"><i class="fas fa-redo"></i> Ulangi Sesi / Ganti Kelas</button>
+                <button id="restart-btn" class="btn btn-glow" style="margin-top: 15px; width:100%;"><i class="fas fa-redo"></i> Ulangi Sesi / Ganti Paket</button>
             </div>
         </main>
     </div>
