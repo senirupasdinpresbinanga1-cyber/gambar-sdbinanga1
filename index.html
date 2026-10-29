@@ -47,20 +47,12 @@
                 <button class="btn btn-danger btn-sm" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> Keluar Admin</button>
             </div>
 
-            <div class="glass-card" style="margin-bottom: 20px; background: rgba(15, 23, 42, 0.8); text-align: left; padding: 15px;">
-                <h4 style="color: #f59e0b; margin-bottom: 10px;"><i class="fas fa-sliders-h"></i> Kontrol Sesi Siswa Aktif</h4>
-                <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 12px;">Gunakan tombol di bawah untuk mereset sesi siswa di layar utama:</p>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-danger" onclick="adminResetSession()"><i class="fas fa-redo"></i> Reset Sesi Siswa (Mulai Ulang)</button>
-                </div>
-            </div>
-
             <div class="class-selector-group" style="margin-bottom: 15px;">
                 <button class="btn-class active" id="admin-btn-5a" onclick="switchAdminClass('5A')">🏫 Database Kelas 5A</button>
                 <button class="btn-class" id="admin-btn-5b" onclick="switchAdminClass('5B')">🏫 Database Kelas 5B</button>
             </div>
 
-            <div class="result-table-wrapper" style="max-height: 50vh; overflow-y: auto;">
+            <div class="result-table-wrapper" style="max-height: 55vh; overflow-y: auto;">
                 <table class="result-table">
                     <thead>
                         <tr>
@@ -184,6 +176,11 @@
 
             <!-- Drawing Panel -->
             <div id="game-panel" class="glass-card hidden">
+                <!-- Tombol Reset Sesi Kecil Tersembunyi di Pojok Panel Game -->
+                <div style="display: flex; justify-content: flex-end; margin-bottom: -5px;">
+                    <button class="btn-reset-micro" onclick="adminResetSession()" title="Reset Sesi"><i class="fas fa-redo-alt"></i> Reset</button>
+                </div>
+
                 <div class="game-info-bar">
                     <div class="info-item">
                         <span class="label">Pemain Saat Ini:</span>
