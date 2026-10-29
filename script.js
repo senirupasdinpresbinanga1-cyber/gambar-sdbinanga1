@@ -1,7 +1,7 @@
 const GS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGD2akVdn5TdycTWbHvoNuLQBDWaPzIkJCY2wLgD4JvN5F47qpaOqVVyqSJWDnqtCcbA/exec";
 
-let selectedClass = "5A";
-let adminSelectedClass = "5A";
+let selectedClass = "6A";
+let adminSelectedClass = "6A";
 let selectedPackageKey = "hewan";
 let studentsList = [];
 let studentResults = {};
@@ -95,8 +95,8 @@ function logoutAdmin() {
 
 function switchAdminClass(kelas) {
     adminSelectedClass = kelas;
-    document.getElementById('admin-btn-5a').classList.toggle('active', kelas === '5A');
-    document.getElementById('admin-btn-5b').classList.toggle('active', kelas === '5B');
+    document.getElementById('admin-btn-6a').classList.toggle('active', kelas === '6A');
+    document.getElementById('admin-btn-6b').classList.toggle('active', kelas === '6B');
     fetchAdminDatabaseData(false);
 }
 
@@ -142,20 +142,27 @@ async function fetchAdminDatabaseData(isBackground = false) {
     }
 }
 
-function adminSkipStudent() {
-    if (!isGameActive) {
-        alert("Sesi menggambar belum dimulai!");
-        return;
-    }
-    if (confirm("Yakin ingin melakukan SKIP (Absen) pada siswa ini dari panel admin?")) {
-        skipCurrentStudent();
-        alert("Perintah Skip berhasil dijalankan.");
-    }
-}
-
+// PERBAIKAN: Tombol Reset Sesi dari Admin sekarang mereset alur permainan siswa tanpa keluar dari panel admin
 function adminResetSession() {
-    if (confirm("Yakin ingin melakukan RESET (Mulai Ulang Sesi) dari panel admin?")) {
-        location.reload();
+    if (confirm("Yakin ingin melakukan RESET (Mulai Ulang Sesi Siswa)?")) {
+        clearInterval(countdown);
+        isGameActive = false;
+        
+        // Sembunyikan panel game/finish jika sedang terbuka di layar utama
+        document.getElementById('game-panel').classList.add('hidden');
+        document.getElementById('finish-panel').classList.add('hidden');
+        document.getElementById('setup-panel').classList.remove('hidden');
+        document.getElementById('app-header-el').classList.remove('hidden');
+        document.getElementById('top-nav-admin').classList.remove('hidden');
+        
+        // Reset state variabel permainan
+        currentIndex = 0;
+        studentResults = {};
+        takenObjects = [];
+        
+        // Muat ulang daftar siswa
+        fetchStudentsFromDatabase();
+        alert("Sesi siswa berhasil direset ke halaman awal.");
     }
 }
 
@@ -625,19 +632,10 @@ function evaluateDrawingWithAI() {
     let jaggedRatio = edgeTransitions / nonWhitePixels;
 
     // Komponen Penilaian Berdasarkan Bobot:
-    // - Kesesuaian objek dan kelengkapan gambar (30%)
     let objCompleteness = Math.min(30, (fillRatio * 150));
-
-    // - Kerapian dan penyelesaian pewarnaan (25%)
     let cleanlinessScore = Math.max(5, Math.min(25, 25 - (jaggedRatio * 50)));
-
-    // - Komposisi dan harmoni warna (25%)
     let harmonyScore = Math.min(25, uniqueColors.size * 3.5);
-
-    // - Kreativitas dan detail tambahan (10%)
     let creativityScore = Math.min(10, uniqueColors.size >= 4 ? 10 : 5);
-
-    // - Teknik penggunaan alat digital (10%)
     let digitalTechScore = Math.min(10, Math.max(4, 10 - (jaggedRatio * 20)));
 
     let rawTotalScore = Math.round(objCompleteness + cleanlinessScore + harmonyScore + creativityScore + digitalTechScore);
@@ -647,12 +645,9 @@ function evaluateDrawingWithAI() {
     let statusKondisi = "";
 
     if (jaggedRatio > 0.45 || uniqueColors.size < 2) {
-        // Objek lengkap tetapi pewarnaan kurang rapi (Mengikuti rubrik standar di bawah 85)
         finalScore = Math.max(51, Math.min(84, rawTotalScore));
         statusKondisi = "Objek lengkap tetapi pewarnaan kurang rapi (Mengikuti rubrik).";
     } else {
-        // Objek lengkap dan pewarnaan rapi (Berpeluang mendapat 85–100)
-        // Mapping skor ke rentang 85 - 100
         finalScore = Math.floor(85 + (Math.min(1, rawTotalScore / 100) * 15));
         finalScore = Math.min(100, finalScore);
         statusKondisi = "Objek lengkap dan pewarnaan rapi (Berpeluang 85–100).";
@@ -738,7 +733,9 @@ function closeTurnAlert() {
     promptStudentChoice();
 }
 
+// Tombol Skip Siswa Absen dipindahkan ke halaman mengambar (game-panel)
 function skipCurrentStudent() {
+    if (!confirm("Yakin ingin menandai siswa ini absen / tidak hadir (skip)?")) return;
     clearInterval(countdown);
     const student = studentsList[currentIndex];
     student.skipped = true;
