@@ -11,8 +11,6 @@ let countdown;
 let timeLeft = 180; // 3 Menit
 let isGameActive = false;
 let adminInterval = null;
-let studentSyncInterval = null;
-let lastSyncedState = "";
 
 const packagesData = {
     hewan: [
@@ -111,25 +109,9 @@ function updateAdminControlPanel() {
     }
 }
 
-// 🌐 SINKRONISASI STATE KE SERVER
-function updateGameStateOnServer(status, idx, studentName, objekName) {
-    if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
-        fetch(GS_WEB_APP_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                type: "updateState",
-                state: { status: status, currentIndex: idx, currentStudent: studentName, currentObjek: objekName }
-            })
-        }).catch(err => console.error("Gagal sinkron state:", err));
-    }
-}
-
-// 🎮 AKSI ADMIN: TRIGGER DARI PANEL KONTROL ADMIN
 function adminAction(actionType) {
     if (!isGameActive) {
-        alert("Sesi menggambar sedang tidak berjalan! Silakan mulai sesi terlebih dahulu di layar utama.");
+        alert("Sesi menggambar sedang tidak berjalan!");
         return;
     }
 
@@ -139,7 +121,6 @@ function adminAction(actionType) {
         skipCurrentStudent();
     } else if (actionType === 'reset') {
         if (confirm("Apakah Anda yakin ingin mereset sesi menggambar?")) {
-            updateGameStateOnServer("RESET", 0, "", "");
             location.reload();
         }
     }
@@ -302,30 +283,6 @@ function startEntireGame() {
     renderPaletteGrid();
     renderSidebarList();
     promptStudentChoice();
-
-    // Kirim state awal ke server agar layar siswa tersinkron
-    updateGameStateOnServer("CHOICE", currentIndex, studentsList[currentIndex].name, "");
-
-    // Aktifkan sinkronisasi siswa di background
-    startStudentSyncListener();
-}
-
-// 🔄 LISTENER DI SISI SISWA UNTUK MENERIMA PERINTAH DARI ADMIN
-function startStudentSyncListener() {
-    if (studentSyncInterval) clearInterval(studentSyncInterval);
-    studentSyncInterval = setInterval(async () => {
-        if (!isGameActive) return;
-        try {
-            let res = await fetch(`${GS_WEB_APP_URL}?action=getGameState`);
-            let state = await res.json();
-            
-            if (state.status === "RESET") {
-                location.reload();
-            }
-        } catch (e) {
-            console.error("Sync error:", e);
-        }
-    }, 1500);
 }
 
 function initCanvas() {
@@ -373,6 +330,7 @@ function undoCanvas() {
     }
 }
 
+// 1️⃣ Tampilkan pop-up "Giliran Berikutnya..." terlebih dahulu
 function promptStudentChoice() {
     if (currentIndex >= studentsList.length) {
         isGameActive = false;
@@ -387,12 +345,11 @@ function promptStudentChoice() {
         return;
     }
 
-    // ✨ TAMPILKAN POP-UP "Giliran Nama..." SEBELUM MEMILIH GAMBAR SESUAI PERMINTAAN ANDA
     document.getElementById('turn-alert-msg').innerHTML = `Giliran Berikutnya <strong style="color:#38bdf8;">${student.name}..</strong>`;
     document.getElementById('turn-alert-overlay').style.display = 'flex';
 }
 
-// Saat tombol Lanjutkan pada alert giliran ditekan, baru buka menu pilih gambar
+// 2️⃣ Setelah tombol di alert giliran diklik, buka modal pemilihan objek & tombol "Mulai Menggambar"
 document.getElementById('turn-alert-overlay').querySelector('button').onclick = () => {
     document.getElementById('turn-alert-overlay').style.display = 'none';
     
@@ -424,6 +381,7 @@ document.getElementById('turn-alert-overlay').querySelector('button').onclick = 
     document.getElementById('student-choice-modal').style.display = 'flex';
 };
 
+// 3️⃣ Saat tombol "Mulai Menggambar" diklik di modal pemilihan objek
 function confirmStudentChoice() {
     const customInput = document.getElementById('custom-item-input').value.trim();
     const selectEl = document.getElementById('package-item-select').value;
@@ -450,8 +408,6 @@ function confirmStudentChoice() {
     document.getElementById('timer').textContent = timeLeft;
     startTimer();
     renderSidebarList();
-
-    updateGameStateOnServer("DRAWING", currentIndex, studentsList[currentIndex].name, chosen);
 }
 
 function handleCanvasDown(e) {
@@ -711,7 +667,6 @@ function handleTimeUp() {
 
     currentIndex++;
     promptStudentChoice();
-    updateGameStateOnServer("CHOICE", currentIndex, studentsList[currentIndex] ? studentsList[currentIndex].name : "", "");
 }
 
 function triggerSelesaiButton() {
@@ -736,7 +691,6 @@ function triggerSelesaiButton() {
     currentIndex++;
     if (currentIndex < studentsList.length) {
         promptStudentChoice();
-        updateGameStateOnServer("CHOICE", currentIndex, studentsList[currentIndex].name, "");
     } else {
         endAllTurns();
     }
@@ -755,7 +709,6 @@ function skipCurrentStudent() {
     currentIndex++;
     if (currentIndex < studentsList.length) {
         promptStudentChoice();
-        updateGameStateOnServer("CHOICE", currentIndex, studentsList[currentIndex].name, "");
     } else {
         endAllTurns();
     }
