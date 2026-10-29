@@ -22,6 +22,29 @@ body {
     z-index: -1;
 }
 
+.top-nav-admin {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    z-index: 100;
+}
+
+.btn-admin-nav {
+    background: #334155;
+    color: #38bdf8;
+    border: 1px solid #38bdf8;
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-admin-nav:hover {
+    background: #38bdf8;
+    color: #0f172a;
+}
+
 .full-overlay {
     position: fixed;
     top: 0;
@@ -130,15 +153,15 @@ body {
 }
 
 .student-status {
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .status-pending { background: #334155; color: #94a3b8; }
 .status-active { background: #0284c7; color: #fff; }
-.status-done { background: #16a34a; color: #fff; }
+.status-done { background: #16a34a; color: #fff; font-size: 13px; }
 .status-skipped { background: #dc3545; color: #fff; }
 
 .app-container {
