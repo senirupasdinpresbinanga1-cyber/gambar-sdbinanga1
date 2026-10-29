@@ -11,6 +11,64 @@
 <body>
     <div class="fullscreen-bg"></div>
 
+    <!-- Tombol Admin Login di Pojok Kanan Atas -->
+    <div class="top-nav-admin">
+        <button id="admin-login-btn" class="btn btn-admin-nav" onclick="openAdminLoginModal()"><i class="fas fa-user-shield"></i> Login Admin</button>
+    </div>
+
+    <!-- Modal Login Admin -->
+    <div id="admin-login-modal" class="full-overlay" style="display: none;">
+        <div class="card modal-card" style="max-width: 380px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-lock"></i> Login Admin</h3>
+                <button class="btn-close" onclick="closeAdminLoginModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: left;">
+                <label style="font-size: 13px; color: #cbd5e1; display: block; margin-top: 10px;">Username:</label>
+                <input type="text" id="admin-user-input" placeholder="Masukkan username" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; margin-bottom: 12px;">
+
+                <label style="font-size: 13px; color: #cbd5e1; display: block;">Password:</label>
+                <input type="password" id="admin-pass-input" placeholder="Masukkan password" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; margin-bottom: 15px;">
+
+                <p id="admin-login-error" style="color: #dc3545; font-size: 12px; display: none; margin-bottom: 10px;">Username atau Password salah!</p>
+
+                <button class="btn btn-glow" onclick="processAdminLogin()" style="width: 100%; padding: 12px;">Masuk <i class="fas fa-sign-in-alt"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Halaman Dashboard Admin -->
+    <div id="admin-dashboard-page" class="full-overlay" style="display: none; align-items: flex-start; overflow-y: auto; padding: 20px 0;">
+        <div class="card modal-card" style="max-width: 950px; width: 95%; margin: auto;">
+            <div class="modal-header">
+                <h2 style="color: #38bdf8;"><i class="fas fa-database"></i> Database Hasil Gambar Siswa (Admin)</h2>
+                <button class="btn btn-danger btn-sm" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> Keluar Admin</button>
+            </div>
+
+            <div class="class-selector-group" style="margin-bottom: 15px;">
+                <button class="btn-class active" id="admin-btn-6a" onclick="switchAdminClass('6A')">🏫 Database Kelas 6A</button>
+                <button class="btn-class" id="admin-btn-6b" onclick="switchAdminClass('6B')">🏫 Database Kelas 6B</button>
+            </div>
+
+            <div class="result-table-wrapper" style="max-height: 65vh; overflow-y: auto;">
+                <table class="result-table">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Keterangan Gambar</th>
+                            <th>Nilai</th>
+                            <th>Waktu</th>
+                            <th>Analisis</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-db-table-body">
+                        <tr><td colspan="5">Memuat data spreadsheet...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Warning Overlay (Fullscreen) -->
     <div id="warning-overlay" class="full-overlay" style="display: none;">
         <div class="card warning-card">
@@ -20,7 +78,7 @@
         </div>
     </div>
 
-    <!-- Time Up Overlay (Waktu Habis 3 Menit) -->
+    <!-- Time Up Overlay -->
     <div id="timeup-overlay" class="full-overlay" style="display: none;">
         <div class="card timeup-card">
             <h2 style="margin-bottom: 10px; color: #f59e0b; font-size: 24px;"><i class="fas fa-hourglass-end"></i> Waktu Habis!</h2>
@@ -53,7 +111,7 @@
     <div id="turn-alert-overlay" class="full-overlay" style="display: none;">
         <div class="card warning-card" style="border-top: 5px solid #38bdf8;">
             <h2 id="turn-alert-title" style="margin-bottom: 12px; color: #0284c7; font-size: 22px;"><i class="fas fa-user-clock"></i> Giliran Berikutnya</h2>
-            <p id="turn-alert-msg" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Selanjutnya giliran (Nama siswa)</p>
+            <p id="turn-alert-msg" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Giliran Berikutnya...</p>
             <button class="btn btn-glow" onclick="closeTurnAlert()" style="width: 100%; padding: 12px; font-size: 16px;">Lanjutkan <i class="fas fa-arrow-right"></i></button>
         </div>
     </div>
@@ -109,7 +167,7 @@
                     </div>
 
                     <ul class="rule-list">
-                        <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`[cite: 1, 2].</li>
+                        <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`.</li>
                         <li>🤖 <strong>Penilaian AI Jujur:</strong> Sistem AI menilai karya berdasarkan detail goresan, warna, dan kerapian dari 0% - 100%.</li>
                         <li>⏳ <strong>Batas Waktu:</strong> Durasi menggambar adalah **180 detik (3 menit)** per siswa.</li>
                         <li>🪣 <strong>Cat Otomatis (Fill):</strong> Gunakan alat "Cat Tumpah" untuk mewarnai area tertutup secara instan.</li>
