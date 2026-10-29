@@ -5,11 +5,12 @@ let adminSelectedClass = "6A";
 let selectedPackageKey = "hewan";
 let studentsList = [];
 let studentResults = {};
-let takenObjects = []; // Menyimpan objek yang sudah diambil agar hilang dari daftar pilihan berikutnya
+let takenObjects = [];
 let currentIndex = 0;
 let countdown;
 let timeLeft = 180; // 3 Menit
 let isGameActive = false;
+let adminInterval = null; // Variabel pengatur interval auto-refresh admin
 
 const packagesData = {
     hewan: [
@@ -52,7 +53,7 @@ const availablePalette = [
     "#6B8E23", "#9932CC"
 ];
 
-// --- LOGIN ADMIN & DASHBOARD ---
+// --- LOGIN ADMIN & DASHBOARD DENGAN AUTO-REFRESH SETIAP 1 DETIK ---
 function openAdminLoginModal() {
     document.getElementById('admin-login-modal').style.display = 'flex';
     document.getElementById('admin-user-input').value = '';
@@ -79,10 +80,20 @@ function processAdminLogin() {
 function openAdminDashboard() {
     document.getElementById('admin-dashboard-page').style.display = 'flex';
     switchAdminClass(selectedClass);
+
+    // Aktifkan auto-refresh data database admin setiap 1 detik
+    if (adminInterval) clearInterval(adminInterval);
+    adminInterval = setInterval(() => {
+        fetchAdminDatabaseData(true); // true agar berjalan di background tanpa mengganggu interaksi
+    }, 1000);
 }
 
 function logoutAdmin() {
     document.getElementById('admin-dashboard-page').style.display = 'none';
+    if (adminInterval) {
+        clearInterval(adminInterval); // Matikan interval saat admin keluar
+        adminInterval = null;
+    }
 }
 
 function switchAdminClass(kelas) {
@@ -90,12 +101,14 @@ function switchAdminClass(kelas) {
     document.getElementById('admin-btn-6a').classList.toggle('active', kelas === '6A');
     document.getElementById('admin-btn-6b').classList.toggle('active', kelas === '6B');
 
-    fetchAdminDatabaseData();
+    fetchAdminDatabaseData(false);
 }
 
-async function fetchAdminDatabaseData() {
+async function fetchAdminDatabaseData(isBackground = false) {
     const tbody = document.getElementById('admin-db-table-body');
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Mengambil data dari Spreadsheet kelas ${adminSelectedClass}...</td></tr>`;
+    if (!isBackground) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Mengambil data dari Spreadsheet kelas ${adminSelectedClass}...</td></tr>`;
+    }
 
     if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
         try {
@@ -103,7 +116,7 @@ async function fetchAdminDatabaseData() {
             let rows = await response.json();
             
             if (!rows || rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Belum ada data untuk kelas ${adminSelectedClass}</td></tr>`;
+                if (!isBackground) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Belum ada data untuk kelas ${adminSelectedClass}</td></tr>`;
                 return;
             }
 
@@ -128,19 +141,20 @@ async function fetchAdminDatabaseData() {
                 tbody.appendChild(tr);
             });
         } catch(e) {
-            console.error(e);
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#dc3545;">Gagal terhubung ke Google Spreadsheet</td></tr>`;
+            console.error("Gagal sinkronisasi admin:", e);
         }
     } else {
-        tbody.innerHTML = `
-            <tr>
-                <td>Abid</td>
-                <td>Kucing</td>
-                <td><strong style="color: #38bdf8;">82%</strong></td>
-                <td>29/10/2026, 09.56.58</td>
-                <td><button class="btn btn-glow btn-sm"><i class="fas fa-image"></i> Buka Hasil Gambar</button></td>
-            </tr>
-        `;
+        if (!isBackground) {
+            tbody.innerHTML = `
+                <tr>
+                    <td>Abid</td>
+                    <td>Kucing</td>
+                    <td><strong style="color: #38bdf8;">82%</strong></td>
+                    <td>29/10/2026, 09.56.58</td>
+                    <td><button class="btn btn-glow btn-sm"><i class="fas fa-image"></i> Buka Hasil Gambar</button></td>
+                </tr>
+            `;
+        }
     }
 }
 
@@ -242,7 +256,7 @@ function startEntireGame() {
 
     currentIndex = 0;
     studentResults = {};
-    takenObjects = []; // Reset daftar objek yang sudah diambil saat game dimulai ulang
+    takenObjects = [];
     isGameActive = true;
     
     document.getElementById('setup-panel').classList.add('hidden');
@@ -320,8 +334,6 @@ function promptStudentChoice() {
     selectEl.innerHTML = '';
     
     let items = packagesData[selectedPackageKey] || [];
-    
-    // ✨ FILTER: Hanya tampilkan objek yang BELUM pernah diambil oleh siswa lain dalam sesi ini
     let availableItems = items.filter(item => !takenObjects.includes(item.toLowerCase()));
 
     if (availableItems.length === 0) {
@@ -352,9 +364,7 @@ function confirmStudentChoice() {
         return;
     }
 
-    // Masukkan objek ke daftar objek yang sudah diambil
     takenObjects.push(chosen.trim().toLowerCase());
-
     studentsList[currentIndex].chosenItem = chosen;
 
     document.getElementById('student-choice-modal').style.display = 'none';
