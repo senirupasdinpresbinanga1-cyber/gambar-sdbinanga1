@@ -360,7 +360,6 @@ function promptStudentChoice() {
     selectEl.innerHTML = '';
     
     let items = packagesData[selectedPackageKey] || [];
-    // MENYARING OBJEK YANG SUDAH DIAMBIL SISWA LAIN
     let availableItems = items.filter(item => !takenObjects.includes(item.toLowerCase()));
 
     if (availableItems.length === 0) {
@@ -388,7 +387,6 @@ function confirmStudentChoice() {
         return;
     }
 
-    // CATAT OBJEK YANG DIPILIH SISWA AGAR OTOMATIS HILANG DI SISWA BERIKUTNYA
     takenObjects.push(selectEl.trim().toLowerCase());
     studentsList[currentIndex].chosenItem = selectEl;
 
@@ -654,7 +652,8 @@ function handleTimeUp() {
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
-        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Giliran Berikutnya <strong style="color:#38bdf8;">${studentsList[nextIndex].name}..</strong>`;
+        // PERBAIKAN: Menghapus tulisan "Giliran Berikutnya" yang dobel dan membuat nama jadi warna hijau
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br><span class="green-name">${studentsList[nextIndex].name}..</span>`;
     } else {
         document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
     }
@@ -687,7 +686,8 @@ function triggerSelesaiButton() {
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
-        document.getElementById('turn-alert-msg').textContent = `Giliran Berikutnya ${studentsList[nextIndex].name}..`;
+        // PERBAIKAN: Menghapus tulisan "Giliran Berikutnya" yang dobel dan membuat nama jadi warna hijau
+        document.getElementById('turn-alert-msg').innerHTML = `<span class="green-name">${studentsList[nextIndex].name}..</span>`;
         document.getElementById('turn-alert-overlay').style.display = 'flex';
     } else {
         endAllTurns();
