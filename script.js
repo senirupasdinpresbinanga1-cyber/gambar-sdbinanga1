@@ -1,7 +1,7 @@
 const GS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGD2akVdn5TdycTWbHvoNuLQBDWaPzIkJCY2wLgD4JvN5F47qpaOqVVyqSJWDnqtCcbA/exec";
 
-let selectedClass = "5A";
-let adminSelectedClass = "5A";
+let selectedClass = "6A";
+let adminSelectedClass = "6A";
 let selectedPackageKey = "hewan";
 let studentsList = [];
 let studentResults = {};
@@ -95,8 +95,8 @@ function logoutAdmin() {
 
 function switchAdminClass(kelas) {
     adminSelectedClass = kelas;
-    document.getElementById('admin-btn-5a').classList.toggle('active', kelas === '5A');
-    document.getElementById('admin-btn-5b').classList.toggle('active', kelas === '5B');
+    document.getElementById('admin-btn-6a').classList.toggle('active', kelas === '6A');
+    document.getElementById('admin-btn-6b').classList.toggle('active', kelas === '6B');
     fetchAdminDatabaseData(false);
 }
 
@@ -142,6 +142,7 @@ async function fetchAdminDatabaseData(isBackground = false) {
     }
 }
 
+// PERBAIKAN: Tombol Reset Sesi dari Admin mereset alur permainan siswa ke halaman utama tanpa menutup panel admin
 function adminResetSession() {
     if (confirm("Yakin ingin melakukan RESET (Mulai Ulang Sesi Siswa)?")) {
         clearInterval(countdown);
@@ -559,6 +560,9 @@ function floodFill(startX, startY, fillColor) {
     ctx.putImageData(imgData, 0, 0);
 }
 
+// ==========================================
+// SISTEM PENILAIAN AI & BOBOT RUBRIK BARU
+// ==========================================
 function evaluateDrawingWithAI() {
     const width = canvas.width;
     const height = canvas.height;
@@ -592,6 +596,7 @@ function evaluateDrawingWithAI() {
         }
     }
 
+    // 1. PENGAMAN NILAI: Kondisi Gambar - Hanya sebagian kecil objek yang dikerjakan (Nilai dibatasi maksimal 20)
     if (nonWhitePixels < 800) {
         return {
             score: `${Math.floor(Math.random() * 10) + 10}%`,
@@ -599,6 +604,7 @@ function evaluateDrawingWithAI() {
         };
     }
 
+    // 2. PENGAMAN NILAI: Kondisi Gambar - Objek utama belum lengkap (Nilai dibatasi maksimal 50)
     let fillRatio = nonWhitePixels / totalPixels;
     if (fillRatio < 0.04) {
         let limitedScore = Math.floor(Math.random() * 15) + 35; 
@@ -629,6 +635,7 @@ function evaluateDrawingWithAI() {
 
     let rawTotalScore = Math.round(objCompleteness + cleanlinessScore + harmonyScore + creativityScore + digitalTechScore);
 
+    // 3. & 4. PENGAMAN NILAI: Kondisi Gambar lengkap (Pewarnaan kurang rapi vs rapi 85-100)
     let finalScore = 0;
     let statusKondisi = "";
 
@@ -721,6 +728,7 @@ function closeTurnAlert() {
     promptStudentChoice();
 }
 
+// Tombol Skip Siswa Absen langsung dari halaman menggambar (game-panel)
 function skipCurrentStudent() {
     if (!confirm("Yakin ingin menandai siswa ini absen / tidak hadir (skip)?")) return;
     clearInterval(countdown);
