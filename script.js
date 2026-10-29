@@ -5,6 +5,7 @@ let adminSelectedClass = "6A";
 let selectedPackageKey = "hewan";
 let studentsList = [];
 let studentResults = {};
+let takenObjects = []; // Menyimpan objek yang sudah diambil agar hilang dari daftar pilihan berikutnya
 let currentIndex = 0;
 let countdown;
 let timeLeft = 180; // 3 Menit
@@ -210,7 +211,6 @@ fetchStudentsFromDatabase();
 
 document.getElementById('start-btn').addEventListener('click', startEntireGame);
 
-// 🎲 FUNGSI MENGACAK NAMA SISWA (SHUFFLE)
 function shuffleArray(array) {
     let arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
@@ -230,7 +230,6 @@ function startEntireGame() {
         return;
     }
 
-    // Acak urutan nama siswa setiap kali game dimulai
     let randomizedNames = shuffleArray(names);
 
     studentsList = randomizedNames.map((name) => {
@@ -243,6 +242,7 @@ function startEntireGame() {
 
     currentIndex = 0;
     studentResults = {};
+    takenObjects = []; // Reset daftar objek yang sudah diambil saat game dimulai ulang
     isGameActive = true;
     
     document.getElementById('setup-panel').classList.add('hidden');
@@ -250,7 +250,7 @@ function startEntireGame() {
     
     initCanvas();
     renderPaletteGrid();
-    renderSidebarList(); // Perbarui sidebar dengan urutan nama yang sudah diacak
+    renderSidebarList();
     promptStudentChoice();
 }
 
@@ -320,12 +320,23 @@ function promptStudentChoice() {
     selectEl.innerHTML = '';
     
     let items = packagesData[selectedPackageKey] || [];
-    items.forEach(item => {
+    
+    // ✨ FILTER: Hanya tampilkan objek yang BELUM pernah diambil oleh siswa lain dalam sesi ini
+    let availableItems = items.filter(item => !takenObjects.includes(item.toLowerCase()));
+
+    if (availableItems.length === 0) {
         let opt = document.createElement('option');
-        opt.value = item;
-        opt.textContent = item;
+        opt.value = "";
+        opt.textContent = "Semua objek di paket ini sudah habis! (Ketik sendiri di bawah)";
         selectEl.appendChild(opt);
-    });
+    } else {
+        availableItems.forEach(item => {
+            let opt = document.createElement('option');
+            opt.value = item;
+            opt.textContent = item;
+            selectEl.appendChild(opt);
+        });
+    }
 
     document.getElementById('custom-item-input').value = "";
     document.getElementById('student-choice-modal').style.display = 'flex';
@@ -336,6 +347,14 @@ function confirmStudentChoice() {
     const selectEl = document.getElementById('package-item-select').value;
     
     let chosen = customInput !== "" ? customInput : selectEl;
+    if (!chosen) {
+        alert("Silakan pilih atau ketik objek gambar terlebih dahulu!");
+        return;
+    }
+
+    // Masukkan objek ke daftar objek yang sudah diambil
+    takenObjects.push(chosen.trim().toLowerCase());
+
     studentsList[currentIndex].chosenItem = chosen;
 
     document.getElementById('student-choice-modal').style.display = 'none';
@@ -513,7 +532,7 @@ function evaluateDrawingWithAI() {
 
     let totalPixels = width * height;
     let nonWhitePixels = 0;
-    let edgeTransitions = 0; // Menghitung gerigi/bengkokan garis
+    let edgeTransitions = 0; 
     let uniqueColors = new Set();
 
     let grid = new Array(height);
@@ -538,11 +557,10 @@ function evaluateDrawingWithAI() {
         }
     }
 
-    // Jika gambar terlalu kecil/sedikit (seperti coretan 1 mata saja)
     if (nonWhitePixels < 1500) {
         return {
             score: `${Math.floor(Math.random() * 10) + 12}%`,
-            desc: "AI Penilai: Gambar sangat minim / terlalu simpel (seperti hanya gambar mata atau titik). Goresan kurang lengkap."
+            desc: "AI Penilai: Gambar sangat minim / terlalu simpel. Goresan kurang lengkap."
         };
     }
 
@@ -566,13 +584,13 @@ function evaluateDrawingWithAI() {
     let completenessScore = Math.min(25, fillRatio * 350);
 
     let finalScore = Math.round(lineSmoothnessScore + colorVarietyScore + completenessScore);
-    finalScore = Math.max(15, Math.min(96, finalScore));
+    finalScore = Math.max(5, Math.min(96, finalScore));
 
     let feedback = "";
     if (finalScore >= 80) {
-        feedback = "AI Penilai: Sangat Rapi! Garis halus/lurus terjaga, warna bersih dan tertutup rapi.";
+        feedback = "AI Penilai: Sangat Rapi! Garis halus terjaga, warna bersih dan tertutup sempurna.";
     } else if (finalScore >= 55) {
-        feedback = "AI Penilai: Cukup Bagus. Pewarnaan lumayan bersih, tetapi beberapa bagian garis masih agak bengkok/kasar.";
+        feedback = "AI Penilai: Cukup Bagus. Pewarnaan lumayan bersih, tetapi beberapa bagian garis masih agak bengkok.";
     } else {
         feedback = "AI Penilai: Kurang Rapi. Terlalu banyak bengkokan pada garis dan goresan kurang stabil.";
     }
