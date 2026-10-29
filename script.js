@@ -556,6 +556,9 @@ function floodFill(startX, startY, fillColor) {
     ctx.putImageData(imgData, 0, 0);
 }
 
+// ==========================================
+// SISTEM PENILAIAN AI & BOBOT RUBRIK BARU
+// ==========================================
 function evaluateDrawingWithAI() {
     const width = canvas.width;
     const height = canvas.height;
@@ -589,13 +592,25 @@ function evaluateDrawingWithAI() {
         }
     }
 
-    if (nonWhitePixels < 1500) {
+    // 1. PENGAMAN NILAI: Kondisi Gambar - Hanya sebagian kecil objek yang dikerjakan (Nilai dibatasi maksimal 20)
+    if (nonWhitePixels < 800) {
         return {
-            score: `${Math.floor(Math.random() * 10) + 12}%`,
-            desc: "AI Penilai: Gambar sangat minim / terlalu simpel. Goresan kurang lengkap."
+            score: `${Math.floor(Math.random() * 10) + 10}%`,
+            desc: "AI Penilai (Pengaman Nilai): Hanya sebagian kecil objek yang dikerjakan. Nilai dibatasi maksimal 20."
         };
     }
 
+    // 2. PENGAMAN NILAI: Kondisi Gambar - Objek utama belum lengkap (Nilai dibatasi maksimal 50)
+    let fillRatio = nonWhitePixels / totalPixels;
+    if (fillRatio < 0.04) {
+        let limitedScore = Math.floor(Math.random() * 15) + 35; // Batas max 50
+        return {
+            score: `${limitedScore}%`,
+            desc: "AI Penilai (Pengaman Nilai): Objek utama belum lengkap. Nilai dibatasi maksimal 50."
+        };
+    }
+
+    // Hitung detail tepi & kehalusan garis untuk kerapian
     for (let y = 1; y < height - 1; y += 2) {
         for (let x = 1; x < width - 1; x += 2) {
             if (grid[y][x] === 1) {
@@ -608,17 +623,42 @@ function evaluateDrawingWithAI() {
     }
 
     let jaggedRatio = edgeTransitions / nonWhitePixels;
-    let lineSmoothnessScore = Math.max(5, Math.min(50, 50 - (jaggedRatio * 180)));
-    let fillRatio = nonWhitePixels / totalPixels;
-    let colorVarietyScore = Math.min(25, uniqueColors.size * 5);
-    let completenessScore = Math.min(25, fillRatio * 350);
 
-    let finalScore = Math.round(lineSmoothnessScore + colorVarietyScore + completenessScore);
-    finalScore = Math.max(5, Math.min(96, finalScore));
+    // Komponen Penilaian Berdasarkan Bobot:
+    // - Kesesuaian objek dan kelengkapan gambar (30%)
+    let objCompleteness = Math.min(30, (fillRatio * 150));
 
-    let feedback = finalScore >= 80 ? "AI Penilai: Sangat Rapi! Garis halus terjaga, warna bersih dan tertutup sempurna." :
-                   finalScore >= 55 ? "AI Penilai: Cukup Bagus. Pewarnaan lumayan bersih, tetapi beberapa bagian garis masih agak bengkok." :
-                   "AI Penilai: Kurang Rapi. Terlalu banyak bengkokan pada garis dan goresan kurang stabil.";
+    // - Kerapian dan penyelesaian pewarnaan (25%)
+    let cleanlinessScore = Math.max(5, Math.min(25, 25 - (jaggedRatio * 50)));
+
+    // - Komposisi dan harmoni warna (25%)
+    let harmonyScore = Math.min(25, uniqueColors.size * 3.5);
+
+    // - Kreativitas dan detail tambahan (10%)
+    let creativityScore = Math.min(10, uniqueColors.size >= 4 ? 10 : 5);
+
+    // - Teknik penggunaan alat digital (10%)
+    let digitalTechScore = Math.min(10, Math.max(4, 10 - (jaggedRatio * 20)));
+
+    let rawTotalScore = Math.round(objCompleteness + cleanlinessScore + harmonyScore + creativityScore + digitalTechScore);
+
+    // 3. & 4. PENGAMAN NILAI: Kondisi Gambar lengkap (Pewarnaan kurang rapi vs rapi 85-100)
+    let finalScore = 0;
+    let statusKondisi = "";
+
+    if (jaggedRatio > 0.45 || uniqueColors.size < 2) {
+        // Objek lengkap tetapi pewarnaan kurang rapi (Mengikuti rubrik standar di bawah 85)
+        finalScore = Math.max(51, Math.min(84, rawTotalScore));
+        statusKondisi = "Objek lengkap tetapi pewarnaan kurang rapi (Mengikuti rubrik).";
+    } else {
+        // Objek lengkap dan pewarnaan rapi (Berpeluang mendapat 85–100)
+        // Mapping skor ke rentang 85 - 100
+        finalScore = Math.floor(85 + (Math.min(1, rawTotalScore / 100) * 15));
+        finalScore = Math.min(100, finalScore);
+        statusKondisi = "Objek lengkap dan pewarnaan rapi (Berpeluang 85–100).";
+    }
+
+    let feedback = `AI Penilai (${statusKondisi}) -> Rincian Bobot: Kesesuaian Objek (${Math.round(objCompleteness)}/30), Kerapian (${Math.round(cleanlinessScore)}/25), Harmoni Warna (${Math.round(harmonyScore)}/25), Kreativitas (${Math.round(creativityScore)}/10), Teknik Digital (${Math.round(digitalTechScore)}/10).`;
 
     return { score: `${finalScore}%`, desc: feedback };
 }
@@ -652,7 +692,6 @@ function handleTimeUp() {
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
-        // PERBAIKAN: Menghapus tulisan "Giliran Berikutnya" yang dobel dan membuat nama jadi warna hijau
         document.getElementById('timeup-message').innerHTML = `Waktu habis!<br><span style="color: #10b981; font-weight: bold; font-size: 18px;">${studentsList[nextIndex].name}..</span>`;
     } else {
         document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
@@ -686,7 +725,6 @@ function triggerSelesaiButton() {
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
-        // PERBAIKAN: Menghapus tulisan "Giliran Berikutnya" yang dobel dan membuat nama jadi warna hijau
         document.getElementById('turn-alert-msg').innerHTML = `<span style="color: #10b981; font-weight: bold; font-size: 18px;">${studentsList[nextIndex].name}..</span>`;
         document.getElementById('turn-alert-overlay').style.display = 'flex';
     } else {
