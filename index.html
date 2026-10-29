@@ -52,7 +52,7 @@
             <div style="background: #0f172a; padding: 15px; border-radius: 12px; border: 1px solid #38bdf8; margin-bottom: 15px; text-align: left;">
                 <h4 style="color: #f59e0b; margin-bottom: 8px;"><i class="fas fa-gamepad"></i> Kontrol Sesi Siswa Aktif:</h4>
                 <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 10px;">
-                    Pemain: <strong id="admin-current-player" style="color: #38bdf8;">-</strong> | 
+                    Pemain Saat Ini: <strong id="admin-current-player" style="color: #38bdf8;">-</strong> | 
                     Objek: <strong id="admin-current-objek" style="color: #f59e0b;">-</strong>
                 </p>
 
@@ -114,7 +114,7 @@
             <div class="modal-body" style="text-align: left;">
                 <p style="font-size: 14px; color: #cbd5e1; margin-bottom: 10px;">Halo <strong id="modal-student-name" style="color: #38bdf8;">-</strong>, silakan pilih atau ketik nama objek yang ingin digambar dari paket <strong id="modal-package-name" style="color: #f59e0b;">-</strong>:</p>
                 
-                <label style="font-size: 13px; color: #94a3b8; display: block; margin-bottom: 5px;">Pilih dari daftar paket (Objek yang sudah diambil siswa lain otomatis hilang):</label>
+                <label style="font-size: 13px; color: #94a3b8; display: block; margin-bottom: 5px;">Pilih dari daftar paket:</label>
                 <select id="package-item-select" class="btn-class" style="width: 100%; margin-bottom: 15px; text-align: left; background: #0f172a;"></select>
                 
                 <label style="font-size: 13px; color: #94a3b8; display: block; margin-bottom: 5px;">Atau ketik sendiri objeknya:</label>
@@ -130,7 +130,6 @@
         <div class="card warning-card" style="border-top: 5px solid #38bdf8;">
             <h2 id="turn-alert-title" style="margin-bottom: 12px; color: #0284c7; font-size: 22px;"><i class="fas fa-user-clock"></i> Giliran Berikutnya</h2>
             <p id="turn-alert-msg" style="color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 20px;">Giliran Berikutnya...</p>
-            <button class="btn btn-glow" onclick="closeTurnAlert()" style="width: 100%; padding: 12px; font-size: 16px;">Lanjutkan <i class="fas fa-arrow-right"></i></button>
         </div>
     </div>
 
@@ -186,14 +185,14 @@
 
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet `Data_6A` / `Data_6B`[cite: 1, 2].</li>
-                        <li>🔒 <strong>Sistem Objek Unik:</strong> Objek yang sudah diambil siswa lain otomatis tidak tersedia lagi.</li>
+                        <li>🔒 <strong>Kontrol Admin:</strong> Tombol navigasi dan penilaian sepenuhnya dikontrol melalui Halaman Admin.</li>
                         <li>⏳ <strong>Batas Waktu:</strong> Durasi menggambar adalah **180 detik (3 menit)** per siswa.</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Sesi Menggambar (Fullscreen)</button>
                 </div>
             </div>
 
-            <!-- Drawing Panel (KHUSUS KANVAS SISWA TANPA TOMBOL KONTROL) -->
+            <!-- Drawing Panel (Siswa) -->
             <div id="game-panel" class="glass-card hidden">
                 <div class="game-info-bar">
                     <div class="info-item">
