@@ -1,6 +1,7 @@
 const GS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGD2akVdn5TdycTWbHvoNuLQBDWaPzIkJCY2wLgD4JvN5F47qpaOqVVyqSJWDnqtCcbA/exec";
 
 let selectedClass = "6A";
+let adminSelectedClass = "6A";
 let selectedPackageKey = "hewan";
 let studentsList = [];
 let studentResults = {};
@@ -49,6 +50,99 @@ const availablePalette = [
     "#20B2AA", "#778899", "#B0C4DE", "#DB7093", "#CD853F",
     "#6B8E23", "#9932CC"
 ];
+
+// --- FUNGSI LOGIN ADMIN & DASHBOARD ---
+function openAdminLoginModal() {
+    document.getElementById('admin-login-modal').style.display = 'flex';
+    document.getElementById('admin-user-input').value = '';
+    document.getElementById('admin-pass-input').value = '';
+    document.getElementById('admin-login-error').style.display = 'none';
+}
+
+function closeAdminLoginModal() {
+    document.getElementById('admin-login-modal').style.display = 'none';
+}
+
+function processAdminLogin() {
+    const user = document.getElementById('admin-user-input').value.trim();
+    const pass = document.getElementById('admin-pass-input').value.trim();
+
+    if (user === "admin" && pass === "admin") {
+        closeAdminLoginModal();
+        openAdminDashboard();
+    } else {
+        document.getElementById('admin-login-error').style.display = 'block';
+    }
+}
+
+function openAdminDashboard() {
+    document.getElementById('admin-dashboard-page').style.display = 'flex';
+    switchAdminClass(selectedClass);
+}
+
+function logoutAdmin() {
+    document.getElementById('admin-dashboard-page').style.display = 'none';
+}
+
+function switchAdminClass(kelas) {
+    adminSelectedClass = kelas;
+    document.getElementById('admin-btn-6a').classList.toggle('active', kelas === '6A');
+    document.getElementById('admin-btn-6b').classList.toggle('active', kelas === '6B');
+
+    fetchAdminDatabaseData();
+}
+
+async function fetchAdminDatabaseData() {
+    const tbody = document.getElementById('admin-db-table-body');
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Mengambil data dari Spreadsheet kelas ${adminSelectedClass}...</td></tr>`;
+
+    if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
+        try {
+            let response = await fetch(`${GS_WEB_APP_URL}?action=getAdminData&kelas=${adminSelectedClass}`);
+            let rows = await response.json();
+            
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Belum ada data untuk kelas ${adminSelectedClass}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                const name = row[0] || '-';
+                const objek = row[1] || '-';
+                const gambar = row[2] || '';
+                const nilai = row[3] || '0%';
+                const waktu = row[5] || '-';
+
+                let actionBtn = gambar ? `<button class="btn btn-glow btn-sm" onclick="openImageModal('${name}', '${gambar}', '${nilai}', 'Gambar disimpan di database.')"><i class="fas fa-image"></i> Buka Hasil Gambar</button>` : '-';
+
+                tr.innerHTML = `
+                    <td><strong>${name}</strong></td>
+                    <td>${objek}</td>
+                    <td><strong style="color: #38bdf8;">${nilai}</strong></td>
+                    <td style="font-size: 12px; color: #94a3b8;">${waktu}</td>
+                    <td>${actionBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch(e) {
+            console.error(e);
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#dc3545;">Gagal terhubung ke Google Spreadsheet</td></tr>`;
+        }
+    } else {
+        tbody.innerHTML = `
+            <tr>
+                <td>Abid</td>
+                <td>Kucing</td>
+                <td><strong style="color: #38bdf8;">82%</strong></td>
+                <td>29/10/2026, 09.56.58</td>
+                <td><button class="btn btn-glow btn-sm"><i class="fas fa-image"></i> Buka Hasil Gambar</button></td>
+            </tr>
+        `;
+    }
+}
+
 
 function selectClass(className) {
     selectedClass = className;
@@ -127,7 +221,7 @@ function startEntireGame() {
         return;
     }
 
-    studentsList = names.map((name, idx) => {
+    studentsList = names.map((name) => {
         return { 
             name: name, 
             chosenItem: "",
@@ -168,7 +262,7 @@ function initCanvas() {
         const mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
         canvas.dispatchEvent(mouseEvent);
     };
-    canvas.ontouchend = (e) => {
+    canvas.ontouchend = () => {
         const mouseEvent = new MouseEvent("mouseup", {});
         canvas.dispatchEvent(mouseEvent);
     };
@@ -356,10 +450,8 @@ function floodFill(startX, startY, fillColor) {
 
     while (queue.length > 0) {
         const [x, y] = queue.pop();
-        let currentIdx = (y * width + x) * 4;
 
         if (x < 0 || x >= width || y < 0 || y >= height) continue;
-        if (!matchedColor(data[currentIdx], data[currentIdx+1], data[currentIdx+2], data[currentIdx+3])) continue;
 
         let westX = x;
         let eastX = x;
@@ -411,9 +503,7 @@ function evaluateDrawingWithAI() {
         let r = data[i];
         let g = data[i+1];
         let b = data[i+2];
-        let a = data[i+3];
 
-        // Jika piksel bukan putih bersih (artinya ada goresan atau warna)
         if (!(r > 250 && g > 250 && b > 250)) {
             coloredPixels++;
             uniqueColors.add(`${r},${g},${b}`);
@@ -423,20 +513,18 @@ function evaluateDrawingWithAI() {
     let densityRatio = coloredPixels / totalPixels;
     let colorVariety = uniqueColors.size;
 
-    // Logika Evaluasi AI Jujur
     let score = 0;
     let feedback = "";
 
     if (coloredPixels < 100) {
-        score = Math.floor(Math.random() * 15) + 5; // 5% - 20% (Sangat kosong / jelek)
+        score = Math.floor(Math.random() * 15) + 5;
         feedback = "AI Penilai: Gambar terlalu kosong atau hampir tidak ada goresan sama sekali. Tingkatkan kreativitasmu!";
     } else {
-        // Hitung berdasarkan tingkat detail piksel dan variasi warna cat
         let densityScore = Math.min(50, (densityRatio * 200)); 
         let colorScore = Math.min(50, (colorVariety * 1.5));
         
         score = Math.round(densityScore + colorScore);
-        score = Math.min(98, Math.max(25, score)); // Batasi rentang wajar 25% - 98%
+        score = Math.min(98, Math.max(25, score));
 
         if (score >= 80) {
             feedback = "AI Penilai: Luar biasa! Goresan sangat rapi, kaya warna, dan bentuk objek terlihat sangat jelas dan kreatif.";
@@ -476,9 +564,11 @@ function handleTimeUp() {
     };
     saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Waktu Habis");
 
+    renderSidebarList();
+
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
-        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Selanjutnya giliran: <strong style="color:#38bdf8;">${studentsList[nextIndex].name}</strong>`;
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Giliran Berikutnya <strong style="color:#38bdf8;">${studentsList[nextIndex].name}..</strong>`;
     } else {
         document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
     }
@@ -508,9 +598,12 @@ function triggerSelesaiButton() {
     saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Selesai");
     document.getElementById('game-panel').classList.add('hidden');
 
+    renderSidebarList();
+
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
-        document.getElementById('turn-alert-msg').textContent = `Selanjutnya giliran ${studentsList[nextIndex].name}`;
+        // ✨ DENGAN NAMA SISWA SPESIFIK SESUAI REQUEST
+        document.getElementById('turn-alert-msg').textContent = `Giliran Berikutnya ${studentsList[nextIndex].name}..`;
         document.getElementById('turn-alert-overlay').style.display = 'flex';
     } else {
         endAllTurns();
@@ -530,6 +623,8 @@ function skipCurrentStudent() {
     studentResults[student.name] = { item: "-", imageData: null, score: "0%", desc: "Siswa absen atau tidak hadir.", status: "Tidak Hadir (Skipped)" };
     saveStudentScoreToDatabase(student, "", "0%", "Tidak Hadir (Skipped)");
     document.getElementById('game-panel').classList.add('hidden');
+
+    renderSidebarList();
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
@@ -582,6 +677,7 @@ function getNextValidIndex(idx) {
     return idx;
 }
 
+// ✨ PENAMBAHAN NILAI AI DI SAMPING NAMA PADA SIDEBAR
 function renderSidebarList() {
     const studentListEl = document.getElementById('student-list');
     studentListEl.innerHTML = '';
@@ -591,9 +687,11 @@ function renderSidebarList() {
         
         const data = studentResults[stu.name];
         let statusBadge = '<span class="student-status status-pending">Belum</span>';
+        
         if (stu.skipped) {
             statusBadge = '<span class="student-status status-skipped">Absen</span>';
-        } else if (data && data.status) {
+        } else if (data && data.score) {
+            // ✨ DITAMPILKAN NILAI (Contoh: 82%) langsung di samping kanan nama
             statusBadge = `<span class="student-status status-done">${data.score}</span>`;
         } else if (idx === currentIndex && isGameActive) {
             statusBadge = '<span class="student-status status-active">Aktif</span>';
@@ -635,7 +733,7 @@ function endAllTurns() {
 }
 
 function openImageModal(studentName, imgData, score, desc) {
-    document.getElementById('modal-preview-title').innerHTML = `<i class="fas fa-robot"></i> Analisis AI: ${studentName}`;
+    document.getElementById('modal-preview-title').innerHTML = `<i class="fas fa-robot"></i> Hasil & Analisis Gambar: ${studentName}`;
     document.getElementById('modal-img-preview').src = imgData;
     document.getElementById('ai-score-text').innerHTML = `🤖 Nilai Akurasi AI: <span style="color: #f59e0b;">${score}</span>`;
     document.getElementById('ai-desc-text').textContent = desc;
