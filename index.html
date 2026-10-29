@@ -11,7 +11,6 @@
 <body>
     <div class="fullscreen-bg"></div>
 
-    <!-- Tombol Admin Login di Pojok Kanan Atas (Diberi id agar bisa disembunyikan saat menggambar) -->
     <div id="top-nav-admin" class="top-nav-admin">
         <button id="admin-login-btn" class="btn btn-admin-nav" onclick="openAdminLoginModal()"><i class="fas fa-user-shield"></i> Login Admin</button>
     </div>
@@ -48,7 +47,6 @@
                 <button class="btn btn-danger btn-sm" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> Keluar Admin</button>
             </div>
 
-            <!-- Panel Tombol Kontrol Jarak Jauh Admin: Skip & Reset -->
             <div class="glass-card" style="margin-bottom: 20px; background: rgba(15, 23, 42, 0.8); text-align: left; padding: 15px;">
                 <h4 style="color: #f59e0b; margin-bottom: 10px;"><i class="fas fa-sliders-h"></i> Kontrol Sesi Siswa Aktif</h4>
                 <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 12px;">Gunakan tombol di bawah untuk mengontrol sesi siswa yang sedang menggambar di layar utama:</p>
@@ -156,7 +154,6 @@
         </aside>
 
         <main class="app-container">
-            <!-- Header Aplikasi (Diberi id agar otomatis hilang saat masuk kanvas menggambar) -->
             <header id="app-header-el" class="app-header">
                 <h1>🎨 Seni Rupa <span id="header-class-badge" class="badge">Kelas 6A</span></h1>
                 <p>Kanvas Menggambar & Penilaian AI Otomatis (3 Menit)</p>
@@ -232,12 +229,13 @@
                 </div>
 
                 <div class="canvas-wrapper">
-                    <canvas id="drawing-canvas" width="800" height="420"></canvas>
+                    <!-- Ukuran pixel internal diset eksplisit -->
+                    <canvas id="drawing-canvas" width="800" height="380"></canvas>
                 </div>
 
                 <div class="tool-controls">
                     <div class="action-group" style="width: 100%;">
-                        <button id="next-turn-btn" class="btn btn-success" style="width: 100%; padding: 14px; font-size: 16px;" onclick="triggerSelesaiButton()"><i class="fas fa-check-circle"></i> Analisis AI & Lanjut <i class="fas fa-arrow-right"></i></button>
+                        <button id="next-turn-btn" class="btn btn-success" style="width: 100%; padding: 12px; font-size: 15px;" onclick="triggerSelesaiButton()"><i class="fas fa-check-circle"></i> Analisis AI & Lanjut <i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
             </div>
