@@ -4,12 +4,14 @@ let selectedClass = "6A";
 let studentsList = [];
 let studentResults = {};
 let currentIndex = 0;
+let countdown;
+let timeLeft = 120; // 2 Menit
 let isGameActive = false;
 
 // Canvas Drawing States
 let canvas, ctx;
 let isDrawing = false;
-let currentTool = "brush"; // "brush" or "eraser"
+let currentTool = "brush"; 
 let currentColor = "#000000";
 let currentBrushSize = 5;
 let undoStack = [];
@@ -116,13 +118,12 @@ function initCanvas() {
     canvas = document.getElementById('drawing-canvas');
     ctx = canvas.getContext('2d');
 
-    // Reset Canvas listeners
     canvas.onmousedown = startDrawing;
     canvas.onmousemove = draw;
     canvas.onmouseup = stopDrawing;
     canvas.onmouseleave = stopDrawing;
 
-    // Touch Support
+    // Touch Support Mobile
     canvas.ontouchstart = (e) => {
         e.preventDefault();
         const touch = e.touches[0];
@@ -243,10 +244,50 @@ function loadStudentTurn() {
     
     undoStack = [];
     clearCanvas();
+    
+    // Setel ulang dan jalankan Timer 2 Menit (120 detik)
+    timeLeft = 120;
+    document.getElementById('timer').textContent = timeLeft;
+    startTimer();
     renderSidebarList();
 }
 
+function startTimer() {
+    clearInterval(countdown);
+    countdown = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            handleTimeUp();
+        }
+    }, 1000);
+}
+
+function handleTimeUp() {
+    const student = studentsList[currentIndex];
+    const imageBase64 = canvas.toDataURL("image/png");
+    
+    studentResults[student.name] = { imageData: imageBase64, status: "Waktu Habis" };
+    saveStudentScoreToDatabase(student, imageBase64, "Waktu Habis");
+
+    const nextIndex = getNextValidIndex(currentIndex + 1);
+    if (nextIndex < studentsList.length) {
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Selanjutnya giliran: <strong style="color:#38bdf8;">${studentsList[nextIndex].name}</strong>`;
+    } else {
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
+    }
+    document.getElementById('timeup-overlay').style.display = 'flex';
+}
+
+function proceedNextAfterTimeUp() {
+    document.getElementById('timeup-overlay').style.display = 'none';
+    currentIndex++;
+    loadStudentTurn();
+}
+
 function triggerSelesaiButton() {
+    clearInterval(countdown);
     const student = studentsList[currentIndex];
     const imageBase64 = canvas.toDataURL("image/png");
     
@@ -273,6 +314,7 @@ function closeTurnAlert() {
 }
 
 function skipCurrentStudent() {
+    clearInterval(countdown);
     const student = studentsList[currentIndex];
     student.skipped = true;
     studentResults[student.name] = { imageData: null, status: "Tidak Hadir (Skipped)" };
@@ -337,8 +379,8 @@ function renderSidebarList() {
         let statusBadge = '<span class="student-status status-pending">Belum</span>';
         if (stu.skipped) {
             statusBadge = '<span class="student-status status-skipped">Absen</span>';
-        } else if (data && data.status === "Selesai") {
-            statusBadge = `<span class="student-status status-done">Selesai</span>`;
+        } else if (data && data.status) {
+            statusBadge = `<span class="student-status status-done">${data.status}</span>`;
         } else if (idx === currentIndex && isGameActive) {
             statusBadge = '<span class="student-status status-active">Aktif</span>';
         }
@@ -356,7 +398,7 @@ function endAllTurns() {
     document.getElementById('finish-panel').classList.remove('hidden');
     renderSidebarList();
 
-    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh gambar siswa telah tersimpan di Google Spreadsheet (Sheet Data_${selectedClass}).`;
+    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh gambar siswa telah tersimpan di Google Spreadsheet (Sheet Data_${selectedClass})[cite: 2, 3].`;
 
     const tbody = document.getElementById('result-table-body');
     tbody.innerHTML = '';
@@ -395,6 +437,7 @@ document.getElementById('restart-btn').onclick = () => {
 document.addEventListener('fullscreenchange', () => {
     if (isGameActive && !document.fullscreenElement) {
         document.getElementById('warning-overlay').style.display = 'flex';
+        clearInterval(countdown);
     }
 });
 
@@ -402,4 +445,5 @@ function returnToFullscreen() {
     var elem = document.documentElement;
     if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
     document.getElementById('warning-overlay').style.display = 'none';
+    startTimer();
 }
