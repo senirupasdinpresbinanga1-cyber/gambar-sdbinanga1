@@ -142,9 +142,8 @@ async function fetchAdminDatabaseData(isBackground = false) {
     }
 }
 
-// Fungsi Reset Sesi yang dipindahkan ke halaman menggambar (kecil & aman)
-async function adminResetSession() {
-    if (confirm("Yakin ingin mereset sesi dan kembali ke menu utama?")) {
+function adminResetSession() {
+    if (confirm("Yakin ingin melakukan RESET (Mulai Ulang Sesi Siswa)?")) {
         clearInterval(countdown);
         isGameActive = false;
         
@@ -158,22 +157,8 @@ async function adminResetSession() {
         studentResults = {};
         takenObjects = [];
         
-        if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
-            let payload = {
-                type: "updateState",
-                state: { status: "RESET", currentIndex: 0, currentStudent: "", currentObjek: "" }
-            };
-            try {
-                await fetch(GS_WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-            } catch(e) {}
-        }
-        
         fetchStudentsFromDatabase();
+        alert("Sesi siswa berhasil direset ke halaman awal.");
     }
 }
 
