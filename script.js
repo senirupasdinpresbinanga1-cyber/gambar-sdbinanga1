@@ -180,10 +180,10 @@ async function fetchStudentsFromDatabase() {
             setupStudentUI(names);
         } catch (e) {
             console.error("Gagal ambil dari database:", e);
-            setupStudentUI(["SISWA 1", "SISWA 2"]);
+            setupStudentUI(["Siswa A", "Siswa B", "Siswa C"]);
         }
     } else {
-        setupStudentUI(["SISWA CONTOH 1", "SISWA CONTOH 2"]);
+        setupStudentUI(["Siswa A", "Siswa B", "Siswa C"]);
     }
 }
 
@@ -210,6 +210,16 @@ fetchStudentsFromDatabase();
 
 document.getElementById('start-btn').addEventListener('click', startEntireGame);
 
+// 🎲 FUNGSI MENGACAK NAMA SISWA (SHUFFLE)
+function shuffleArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
 function startEntireGame() {
     var elem = document.documentElement;
     if (elem.requestFullscreen) { elem.requestFullscreen().catch(()=>{}); }
@@ -220,7 +230,10 @@ function startEntireGame() {
         return;
     }
 
-    studentsList = names.map((name) => {
+    // Acak urutan nama siswa setiap kali game dimulai
+    let randomizedNames = shuffleArray(names);
+
+    studentsList = randomizedNames.map((name) => {
         return { 
             name: name, 
             chosenItem: "",
@@ -237,6 +250,7 @@ function startEntireGame() {
     
     initCanvas();
     renderPaletteGrid();
+    renderSidebarList(); // Perbarui sidebar dengan urutan nama yang sudah diacak
     promptStudentChoice();
 }
 
@@ -502,7 +516,6 @@ function evaluateDrawingWithAI() {
     let edgeTransitions = 0; // Menghitung gerigi/bengkokan garis
     let uniqueColors = new Set();
 
-    // Matriks 2D sederhana untuk analisis kerapian tepi garis
     let grid = new Array(height);
     for (let y = 0; y < height; y++) {
         grid[y] = new Uint8Array(width);
@@ -515,10 +528,9 @@ function evaluateDrawingWithAI() {
             let g = data[idx + 1];
             let b = data[idx + 2];
 
-            // Cek apakah piksel terisi warna (Bukan latar putih bersih)
             if (!(r > 245 && g > 245 && b > 245)) {
                 nonWhitePixels++;
-                grid[y][x] = 1; // Piksel bergambar
+                grid[y][x] = 1;
                 uniqueColors.add(`${Math.floor(r / 32)},${Math.floor(g / 32)},${Math.floor(b / 32)}`);
             } else {
                 grid[y][x] = 0;
@@ -526,22 +538,17 @@ function evaluateDrawingWithAI() {
         }
     }
 
-    // 1. CEK KELENGKAPAN KARYA (Kuantitas Objek)
-    let fillRatio = nonWhitePixels / totalPixels;
-
-    // Jika gambar terlalu kosong/sedikit (seperti hanya gambar 1 mata / titik kecil)
+    // Jika gambar terlalu kecil/sedikit (seperti coretan 1 mata saja)
     if (nonWhitePixels < 1500) {
         return {
             score: `${Math.floor(Math.random() * 10) + 12}%`,
-            desc: "AI Penilai: Gambar sangat minim / terlalu simpel. Objek tidak lengkap atau hanya coretan kecil."
+            desc: "AI Penilai: Gambar sangat minim / terlalu simpel (seperti hanya gambar mata atau titik). Goresan kurang lengkap."
         };
     }
 
-    // 2. DETEKSI BENGKOKAN & KERAPIAN GARIS (Edge Smoothness Score)
     for (let y = 1; y < height - 1; y += 2) {
         for (let x = 1; x < width - 1; x += 2) {
             if (grid[y][x] === 1) {
-                // Cek perubahan mendadak di sekeliling piksel (indikator garis bengkok/kasar)
                 let neighbors = grid[y - 1][x] + grid[y + 1][x] + grid[y][x - 1] + grid[y][x + 1];
                 if (neighbors === 1 || neighbors === 3) {
                     edgeTransitions++;
@@ -550,31 +557,24 @@ function evaluateDrawingWithAI() {
         }
     }
 
-    // Rasio ketidakrapian garis
     let jaggedRatio = edgeTransitions / nonWhitePixels;
-
-    // Hitung Skor Garis (Makin bengkok/bergerigi, skor makin turun)
     let lineSmoothnessScore = 50 - (jaggedRatio * 180);
     lineSmoothnessScore = Math.max(5, Math.min(50, lineSmoothnessScore));
 
-    // 3. HITUNG SKOR KERAPIAN WARNA & KOPERATIFAN BENTUK
+    let fillRatio = nonWhitePixels / totalPixels;
     let colorVarietyScore = Math.min(25, uniqueColors.size * 5);
     let completenessScore = Math.min(25, fillRatio * 350);
 
-    // Total Skor AI
     let finalScore = Math.round(lineSmoothnessScore + colorVarietyScore + completenessScore);
-
-    // Batasi Rentang Maksimal & Minimal Realistis (15% - 96%)
     finalScore = Math.max(15, Math.min(96, finalScore));
 
-    // Feedback Otomatis AI berdasarkan Akurasi
     let feedback = "";
     if (finalScore >= 80) {
-        feedback = "AI Penilai: Sangat Rapi! Garis sangat mulus, warna bersih, dan bentuk objek tergambar sangat utuh.";
+        feedback = "AI Penilai: Sangat Rapi! Garis halus/lurus terjaga, warna bersih dan tertutup rapi.";
     } else if (finalScore >= 55) {
-        feedback = "AI Penilai: Cukup Bagus. Pewarnaan lumayan bersih, tetapi beberapa garis masih terlihat bengkok/kurang stabil.";
+        feedback = "AI Penilai: Cukup Bagus. Pewarnaan lumayan bersih, tetapi beberapa bagian garis masih agak bengkok/kasar.";
     } else {
-        feedback = "AI Penilai: Kurang Rapi. Garis gambar terlihat kasar/banyak bengkokan dan area gambar kurang terisi sempurna.";
+        feedback = "AI Penilai: Kurang Rapi. Terlalu banyak bengkokan pada garis dan goresan kurang stabil.";
     }
 
     return { score: `${finalScore}%`, desc: feedback };
