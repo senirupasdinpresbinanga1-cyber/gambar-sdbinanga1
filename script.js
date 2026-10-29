@@ -4,72 +4,15 @@ let selectedClass = "6A";
 let studentsList = [];
 let studentResults = {};
 let currentIndex = 0;
-let countdown;
-let timeLeft = 120;
 let isGameActive = false;
 
-let currentSoalObj = null;
-let currentSlots = [null, null, null, null, null];
-let selectedSlotIndex = 0;
-
-// 26 Warna untuk Kelas 6A (Merah sampai Zaitun sesuai daftar urutan Anda)
-const targetColorPool6A = [
-    { hex: "#FF0000", name: "Merah" },
-    { hex: "#FFC0CB", name: "Merah muda" },
-    { hex: "#800000", name: "Merah marun" },
-    { hex: "#FFA500", name: "Jingga" },
-    { hex: "#FFFF00", name: "Kuning" },
-    { hex: "#FFD700", name: "Kuning emas" },
-    { hex: "#008000", name: "Hijau" },
-    { hex: "#98FB98", name: "Hijau muda" },
-    { hex: "#006400", name: "Hijau tua" },
-    { hex: "#008080", name: "Toska" },
-    { hex: "#0000FF", name: "Biru" },
-    { hex: "#ADD8E6", name: "Biru muda" },
-    { hex: "#00008B", name: "Biru tua" },
-    { hex: "#00BFFF", name: "Biru laut" },
-    { hex: "#800080", name: "Ungu" },
-    { hex: "#E6E6FA", name: "Lavender" },
-    { hex: "#EE82EE", name: "Violet" },
-    { hex: "#A52A2A", name: "Cokelat" },
-    { hex: "#D2B48C", name: "Cokelat muda" },
-    { hex: "#FFFDD0", name: "Krem" },
-    { hex: "#F5F5DC", name: "Beige" },
-    { hex: "#FF00FF", name: "Magenta" },
-    { hex: "#FA8072", name: "Salem" },
-    { hex: "#4B0082", name: "Nila" },
-    { hex: "#FFDAB9", name: "Peach" },
-    { hex: "#808000", name: "Zaitun" }
-];
-
-// 25 Warna untuk Kelas 6B (Merah sampai Peach - tanpa Zaitun)
-const targetColorPool6B = [
-    { hex: "#FF0000", name: "Merah" },
-    { hex: "#FFC0CB", name: "Merah muda" },
-    { hex: "#800000", name: "Merah marun" },
-    { hex: "#FFA500", name: "Jingga" },
-    { hex: "#FFFF00", name: "Kuning" },
-    { hex: "#FFD700", name: "Kuning emas" },
-    { hex: "#008000", name: "Hijau" },
-    { hex: "#98FB98", name: "Hijau muda" },
-    { hex: "#006400", name: "Hijau tua" },
-    { hex: "#008080", name: "Toska" },
-    { hex: "#0000FF", name: "Biru" },
-    { hex: "#ADD8E6", name: "Biru muda" },
-    { hex: "#00008B", name: "Biru tua" },
-    { hex: "#00BFFF", name: "Biru laut" },
-    { hex: "#800080", name: "Ungu" },
-    { hex: "#E6E6FA", name: "Lavender" },
-    { hex: "#EE82EE", name: "Violet" },
-    { hex: "#A52A2A", name: "Cokelat" },
-    { hex: "#D2B48C", name: "Cokelat muda" },
-    { hex: "#FFFDD0", name: "Krem" },
-    { hex: "#F5F5DC", name: "Beige" },
-    { hex: "#FF00FF", name: "Magenta" },
-    { hex: "#FA8072", name: "Salem" },
-    { hex: "#4B0082", name: "Nila" },
-    { hex: "#FFDAB9", name: "Peach" }
-];
+// Canvas Drawing States
+let canvas, ctx;
+let isDrawing = false;
+let currentTool = "brush"; // "brush" or "eraser"
+let currentColor = "#000000";
+let currentBrushSize = 5;
+let undoStack = [];
 
 const availablePalette = [
     "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", 
@@ -138,15 +81,6 @@ fetchStudentsFromDatabase();
 
 document.getElementById('start-btn').addEventListener('click', startEntireGame);
 
-function shuffleArray(array) {
-    let arr = [...array];
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
 function startEntireGame() {
     var elem = document.documentElement;
     if (elem.requestFullscreen) { elem.requestFullscreen().catch(()=>{}); }
@@ -157,18 +91,10 @@ function startEntireGame() {
         return;
     }
 
-    // Tentukan pool warna berdasarkan kelas yang dipilih (6A = 26 warna, 6B = 25 warna)
-    let activeColorPool = (selectedClass === "6A") ? targetColorPool6A : targetColorPool6B;
-    const shuffledSoal = shuffleArray(activeColorPool);
-    const totalSoalCount = activeColorPool.length;
-
     studentsList = names.map((name, idx) => {
-        let soal = shuffledSoal[idx % shuffledSoal.length];
         return { 
             name: name, 
-            targetSoal: soal,
-            soalNo: (idx % shuffledSoal.length) + 1,
-            maxSoal: totalSoalCount,
+            soalNo: idx + 1,
             skipped: false
         };
     });
@@ -181,7 +107,121 @@ function startEntireGame() {
     document.getElementById('finish-panel').classList.add('hidden');
     document.getElementById('game-panel').classList.remove('hidden');
     
+    initCanvas();
+    renderPaletteGrid();
     loadStudentTurn();
+}
+
+function initCanvas() {
+    canvas = document.getElementById('drawing-canvas');
+    ctx = canvas.getContext('2d');
+
+    // Reset Canvas listeners
+    canvas.onmousedown = startDrawing;
+    canvas.onmousemove = draw;
+    canvas.onmouseup = stopDrawing;
+    canvas.onmouseleave = stopDrawing;
+
+    // Touch Support
+    canvas.ontouchstart = (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent("mousedown", { clientX: touch.clientX, clientY: touch.clientY });
+        canvas.dispatchEvent(mouseEvent);
+    };
+    canvas.ontouchmove = (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent("mousemove", { clientX: touch.clientX, clientY: touch.clientY });
+        canvas.dispatchEvent(mouseEvent);
+    };
+    canvas.ontouchend = (e) => {
+        const mouseEvent = new MouseEvent("mouseup", {});
+        canvas.dispatchEvent(mouseEvent);
+    };
+}
+
+function clearCanvas() {
+    saveUndoState();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function saveUndoState() {
+    if (undoStack.length >= 10) undoStack.shift();
+    undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+}
+
+function undoCanvas() {
+    if (undoStack.length > 0) {
+        const previousState = undoStack.pop();
+        ctx.putImageData(previousState, 0, 0);
+    }
+}
+
+function startDrawing(e) {
+    isDrawing = true;
+    saveUndoState();
+    draw(e);
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    ctx.lineWidth = currentBrushSize;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    if (currentTool === "eraser") {
+        ctx.strokeStyle = "#ffffff";
+    } else {
+        ctx.strokeStyle = currentColor;
+    }
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+}
+
+function stopDrawing() {
+    isDrawing = false;
+    ctx.beginPath();
+}
+
+function setTool(tool) {
+    currentTool = tool;
+    document.getElementById('tool-brush').classList.toggle('active', tool === 'brush');
+    document.getElementById('tool-eraser').classList.toggle('active', tool === 'eraser');
+}
+
+function updateBrushSize(val) {
+    currentBrushSize = val;
+    document.getElementById('brush-size-val').textContent = `${val}px`;
+}
+
+function setCurrentColor(hex) {
+    currentColor = hex;
+    setTool('brush');
+}
+
+function renderPaletteGrid() {
+    const grid = document.getElementById('color-palette-grid');
+    grid.innerHTML = '';
+    availablePalette.forEach(color => {
+        const item = document.createElement('div');
+        item.className = 'palette-item';
+        item.style.backgroundColor = color;
+        item.onclick = () => {
+            setCurrentColor(color);
+            document.getElementById('color-picker').value = color;
+        };
+        grid.appendChild(item);
+    });
 }
 
 function loadStudentTurn() {
@@ -199,153 +239,23 @@ function loadStudentTurn() {
     }
 
     document.getElementById('current-player').textContent = currentStudent.name;
-    document.getElementById('target-soal-badge').textContent = `Soal ${currentStudent.soalNo} / ${currentStudent.maxSoal}`;
-    currentSoalObj = currentStudent.targetSoal;
+    document.getElementById('target-soal-badge').textContent = `Siswa ${currentIndex + 1} / ${studentsList.length}`;
     
-    document.getElementById('target-color-box').style.backgroundColor = currentSoalObj.hex;
-    document.getElementById('target-color-name').textContent = currentSoalObj.name;
-
-    currentSlots = [null, null, null, null, null];
-    selectedSlotIndex = 0;
-    renderSlots();
-    renderPaletteGrid();
-    updateMixedResultBox();
-
-    timeLeft = 120;
-    document.getElementById('timer').textContent = timeLeft;
-    startTimer();
+    undoStack = [];
+    clearCanvas();
     renderSidebarList();
 }
 
-function renderSlots() {
-    const container = document.getElementById('selected-slots');
-    container.innerHTML = '';
-    currentSlots.forEach((color, idx) => {
-        const slot = document.createElement('div');
-        slot.className = 'color-slot';
-        if (idx === selectedSlotIndex) {
-            slot.classList.add('active-slot');
-        }
-        if (color) {
-            slot.style.backgroundColor = color;
-            slot.classList.remove('transparent-bg');
-        } else {
-            slot.style.backgroundColor = '';
-            slot.classList.add('transparent-bg');
-        }
-        slot.title = `Kolom ${idx+1} (Klik untuk memilih)`;
-        slot.onclick = () => {
-            selectedSlotIndex = idx;
-            renderSlots();
-        };
-        container.appendChild(slot);
-    });
-}
-
-function renderPaletteGrid() {
-    const grid = document.getElementById('color-palette-grid');
-    grid.innerHTML = '';
-    availablePalette.forEach(color => {
-        const item = document.createElement('div');
-        item.className = 'palette-item';
-        item.style.backgroundColor = color;
-        item.onclick = () => applyColorToSelectedSlot(color);
-        grid.appendChild(item);
-    });
-}
-
-function applyColorToSelectedSlot(color) {
-    currentSlots[selectedSlotIndex] = color;
-    renderSlots();
-    updateMixedResultBox();
-    
-    if (selectedSlotIndex < 4) {
-        selectedSlotIndex++;
-        renderSlots();
-    }
-}
-
-function clearSlots() {
-    currentSlots = [null, null, null, null, null];
-    selectedSlotIndex = 0;
-    renderSlots();
-    updateMixedResultBox();
-}
-
-function calculateMixedColor(slots) {
-    let rSum = 0, gSum = 0, bSum = 0, count = 0;
-    slots.forEach(hex => {
-        if (hex !== null) {
-            let rgb = hexToRgb(hex);
-            rSum += rgb.r;
-            gSum += rgb.g;
-            bSum += rgb.b;
-            count++;
-        }
-    });
-
-    if (count === 0) return null;
-
-    let avgR = Math.round(rSum / count);
-    let avgG = Math.round(gSum / count);
-    let avgB = Math.round(bSum / count);
-
-    return `rgb(${avgR}, ${avgG}, ${avgB})`;
-}
-
-function updateMixedResultBox() {
-    const resultBox = document.getElementById('mixed-result-box');
-    let mixedRgbStyle = calculateMixedColor(currentSlots);
-    if (mixedRgbStyle) {
-        resultBox.style.backgroundColor = mixedRgbStyle;
-        resultBox.classList.remove('transparent-bg');
-    } else {
-        resultBox.style.backgroundColor = '';
-        resultBox.classList.add('transparent-bg');
-    }
-}
-
-function startTimer() {
-    clearInterval(countdown);
-    countdown = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(countdown);
-            handleTimeUp();
-        }
-    }, 1000);
-}
-
-function handleTimeUp() {
-    const student = studentsList[currentIndex];
-    const score = calculateColorScore(currentSlots, currentSoalObj.hex);
-    
-    studentResults[student.name] = { score: score + "%", status: "Waktu Habis" };
-    saveStudentScoreToDatabase(student, score + "%", "Waktu Habis");
-
-    const nextIndex = getNextValidIndex(currentIndex + 1);
-    if (nextIndex < studentsList.length) {
-        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Selanjutnya giliran: <strong style="color:#38bdf8;">${studentsList[nextIndex].name}</strong>`;
-    } else {
-        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
-    }
-    document.getElementById('timeup-overlay').style.display = 'flex';
-}
-
-function proceedNextAfterTimeUp() {
-    document.getElementById('timeup-overlay').style.display = 'none';
-    currentIndex++;
-    loadStudentTurn();
-}
-
 function triggerSelesaiButton() {
-    clearInterval(countdown);
     const student = studentsList[currentIndex];
-    const score = calculateColorScore(currentSlots, currentSoalObj.hex);
+    const imageBase64 = canvas.toDataURL("image/png");
     
-    studentResults[student.name] = { score: score + "%", status: "Selesai" };
-    saveStudentScoreToDatabase(student, score + "%", "Selesai");
+    studentResults[student.name] = { 
+        imageData: imageBase64, 
+        status: "Selesai" 
+    };
+    
+    saveStudentScoreToDatabase(student, imageBase64, "Selesai");
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
@@ -363,11 +273,10 @@ function closeTurnAlert() {
 }
 
 function skipCurrentStudent() {
-    clearInterval(countdown);
     const student = studentsList[currentIndex];
     student.skipped = true;
-    studentResults[student.name] = { score: "0%", status: "Tidak Hadir (Skipped)" };
-    saveStudentScoreToDatabase(student, "0%", "Tidak Hadir (Skipped)");
+    studentResults[student.name] = { imageData: null, status: "Tidak Hadir (Skipped)" };
+    saveStudentScoreToDatabase(student, "", "Tidak Hadir (Skipped)");
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
@@ -382,7 +291,7 @@ function confirmStop() {
     location.reload();
 }
 
-function saveStudentScoreToDatabase(student, scoreVal, statusVal) {
+function saveStudentScoreToDatabase(student, imageBase64, statusVal) {
     if (student.skipped) return;
 
     let payload = {
@@ -390,8 +299,8 @@ function saveStudentScoreToDatabase(student, scoreVal, statusVal) {
         type: "appendSingle",
         result: {
             nama: student.name,
-            soalWarna: student.targetSoal.name,
-            nilai: scoreVal,
+            gambar: imageBase64,
+            status: statusVal,
             waktu: new Date().toLocaleString('id-ID')
         }
     };
@@ -403,9 +312,9 @@ function saveStudentScoreToDatabase(student, scoreVal, statusVal) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         }).then(() => {
-            console.log(`Nilai ${student.name} berhasil diperbarui di database.`);
+            console.log(`Gambar ${student.name} berhasil tersimpan ke database.`);
         }).catch(err => {
-            console.error("Gagal kirim nilai:", err);
+            console.error("Gagal simpan gambar:", err);
         });
     }
 }
@@ -415,62 +324,6 @@ function getNextValidIndex(idx) {
         idx++;
     }
     return idx;
-}
-
-function hexToRgb(hex) {
-    let bigint = parseInt(hex.replace('#',''), 16);
-    let r = (bigint >> 16) & 255;
-    let g = (bigint >> 8) & 255;
-    let b = bigint & 255;
-    return {r, g, b};
-}
-
-function calculateColorScore(slots, targetHex) {
-    let validCount = 0;
-    slots.forEach(hex => {
-        if (hex !== null) validCount++;
-    });
-
-    if (validCount < 5) {
-        return 0; 
-    }
-
-    const target = hexToRgb(targetHex);
-    let rSum = 0, gSum = 0, bSum = 0;
-
-    slots.forEach(hex => {
-        let rgb = hexToRgb(hex);
-        rSum += rgb.r;
-        gSum += rgb.g;
-        bSum += rgb.b;
-    });
-
-    let avgR = Math.round(rSum / 5);
-    let avgG = Math.round(gSum / 5);
-    let avgB = Math.round(bSum / 5);
-
-    let targetMax = Math.max(target.r, target.g, target.b);
-    let avgMax = Math.max(avgR, avgG, avgB);
-
-    let targetDominant = target.r === targetMax ? 'R' : (target.g === targetMax ? 'G' : 'B');
-    let avgDominant = avgR === avgMax ? 'R' : (avgG === avgMax ? 'G' : 'B');
-
-    let baseMultiplier = 1.0;
-    if (targetDominant !== avgDominant) {
-        baseMultiplier = 0.25; 
-    }
-
-    let distance = Math.sqrt(
-        Math.pow(target.r - avgR, 2) +
-        Math.pow(target.g - avgG, 2) +
-        Math.pow(target.b - avgB, 2)
-    );
-
-    let maxDistance = 441.6;
-    let accuracyRatio = Math.max(0, 1 - Math.pow(distance / maxDistance, 2.0));
-
-    let finalScore = Math.round(accuracyRatio * baseMultiplier * 100);
-    return Math.min(100, Math.max(0, finalScore));
 }
 
 function renderSidebarList() {
@@ -484,8 +337,8 @@ function renderSidebarList() {
         let statusBadge = '<span class="student-status status-pending">Belum</span>';
         if (stu.skipped) {
             statusBadge = '<span class="student-status status-skipped">Absen</span>';
-        } else if (data && data.score !== undefined) {
-            statusBadge = `<span class="student-status status-done">${data.score}</span>`;
+        } else if (data && data.status === "Selesai") {
+            statusBadge = `<span class="student-status status-done">Selesai</span>`;
         } else if (idx === currentIndex && isGameActive) {
             statusBadge = '<span class="student-status status-active">Aktif</span>';
         }
@@ -503,22 +356,34 @@ function endAllTurns() {
     document.getElementById('finish-panel').classList.remove('hidden');
     renderSidebarList();
 
-    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh nilai siswa telah diperbarui secara real-time di Google Spreadsheet (Sheet Data_${selectedClass}).`;
+    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh gambar siswa telah tersimpan di Google Spreadsheet (Sheet Data_${selectedClass}).`;
 
     const tbody = document.getElementById('result-table-body');
     tbody.innerHTML = '';
     studentsList.forEach((stu, idx) => {
-        let res = studentResults[stu.name] || { score: "0%", status: "-" };
+        let res = studentResults[stu.name] || { imageData: null, status: "-" };
         const tr = document.createElement('tr');
+        
+        let actionBtn = res.imageData ? `<button class="btn btn-glow btn-sm" onclick="openImageModal('${stu.name}', '${res.imageData}')"><i class="fas fa-palette"></i> Lihat Gambar</button>` : '-';
+
         tr.innerHTML = `
             <td>${idx + 1}</td>
             <td>${stu.name}</td>
-            <td>${stu.targetSoal.name}</td>
-            <td><strong>${stu.skipped ? '0% (Skipped)' : res.score}</strong></td>
-            <td>${res.status}</td>
+            <td>${stu.skipped ? 'Tidak Hadir (Skipped)' : res.status}</td>
+            <td>${actionBtn}</td>
         `;
         tbody.appendChild(tr);
     });
+}
+
+function openImageModal(studentName, imgData) {
+    document.getElementById('modal-title').innerHTML = `<i class="fas fa-palette"></i> Hasil Gambar: ${studentName}`;
+    document.getElementById('modal-img-preview').src = imgData;
+    document.getElementById('image-modal').style.display = 'flex';
+}
+
+function closeImageModal() {
+    document.getElementById('image-modal').style.display = 'none';
 }
 
 document.getElementById('restart-btn').onclick = () => {
@@ -530,7 +395,6 @@ document.getElementById('restart-btn').onclick = () => {
 document.addEventListener('fullscreenchange', () => {
     if (isGameActive && !document.fullscreenElement) {
         document.getElementById('warning-overlay').style.display = 'flex';
-        clearInterval(countdown);
     }
 });
 
@@ -538,5 +402,4 @@ function returnToFullscreen() {
     var elem = document.documentElement;
     if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
     document.getElementById('warning-overlay').style.display = 'none';
-    startTimer();
 }
