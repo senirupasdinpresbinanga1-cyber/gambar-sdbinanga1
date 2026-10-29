@@ -11,7 +11,8 @@
 <body>
     <div class="fullscreen-bg"></div>
 
-    <div class="top-nav-admin">
+    <!-- Tombol Admin Login di Pojok Kanan Atas (Diberi id agar bisa disembunyikan saat menggambar) -->
+    <div id="top-nav-admin" class="top-nav-admin">
         <button id="admin-login-btn" class="btn btn-admin-nav" onclick="openAdminLoginModal()"><i class="fas fa-user-shield"></i> Login Admin</button>
     </div>
 
@@ -36,7 +37,7 @@
         </div>
     </div>
 
-    <!-- Halaman Dashboard Admin (Tombol Skip & Reset Dipindahkan Disini) -->
+    <!-- Halaman Dashboard Admin -->
     <div id="admin-dashboard-page" class="full-overlay" style="display: none; align-items: flex-start; overflow-y: auto; padding: 20px 0;">
         <div class="card modal-card" style="max-width: 950px; width: 95%; margin: auto;">
             <div class="modal-header">
@@ -47,7 +48,7 @@
                 <button class="btn btn-danger btn-sm" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> Keluar Admin</button>
             </div>
 
-            <!-- Panel Tombol Kontrol Jarak Jauh Admin: Skip (Absen) & Reset (Mulai Ulang) -->
+            <!-- Panel Tombol Kontrol Jarak Jauh Admin: Skip & Reset -->
             <div class="glass-card" style="margin-bottom: 20px; background: rgba(15, 23, 42, 0.8); text-align: left; padding: 15px;">
                 <h4 style="color: #f59e0b; margin-bottom: 10px;"><i class="fas fa-sliders-h"></i> Kontrol Sesi Siswa Aktif</h4>
                 <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 12px;">Gunakan tombol di bawah untuk mengontrol sesi siswa yang sedang menggambar di layar utama:</p>
@@ -155,7 +156,8 @@
         </aside>
 
         <main class="app-container">
-            <header class="app-header">
+            <!-- Header Aplikasi (Diberi id agar otomatis hilang saat masuk kanvas menggambar) -->
+            <header id="app-header-el" class="app-header">
                 <h1>🎨 Seni Rupa <span id="header-class-badge" class="badge">Kelas 6A</span></h1>
                 <p>Kanvas Menggambar & Penilaian AI Otomatis (3 Menit)</p>
             </header>
@@ -187,7 +189,7 @@
                 </div>
             </div>
 
-            <!-- Drawing Panel (Tombol Skip & Reset Dihilangkan dari Sini) -->
+            <!-- Drawing Panel -->
             <div id="game-panel" class="glass-card hidden">
                 <div class="game-info-bar">
                     <div class="info-item">
