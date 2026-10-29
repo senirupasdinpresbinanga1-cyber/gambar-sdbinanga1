@@ -1,17 +1,41 @@
 const GS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGD2akVdn5TdycTWbHvoNuLQBDWaPzIkJCY2wLgD4JvN5F47qpaOqVVyqSJWDnqtCcbA/exec";
 
 let selectedClass = "6A";
+let selectedPackageKey = "hewan";
 let studentsList = [];
 let studentResults = {};
 let currentIndex = 0;
 let countdown;
-let timeLeft = 120; // 2 Menit
+let timeLeft = 180; // 3 Menit (180 detik)
 let isGameActive = false;
+
+// List Paket Objek Sesuai Permintaan Anda
+const packagesData = {
+    hewan: [
+        "Kucing", "Anjing", "Kelinci", "Kambing", "Sapi", "Kuda", "Ayam", "Bebek", 
+        "Burung", "Ikan", "Kupu-kupu", "Lebah", "Semut", "Belalang", "Capung", 
+        "Katak", "Kura-kura", "Ular", "Buaya", "Gajah", "Harimau", "Singa", 
+        "Monyet", "Jerapah", "Zebra", "Panda"
+    ],
+    rumah: [
+        "Meja", "Kursi", "Sofa", "Lemari", "Tempat tidur", "Bantal", "Guling", 
+        "Selimut", "Kipas angin", "Televisi", "Kulkas", "Mesin cuci", "Kompor", 
+        "Panci", "Wajan", "Piring", "Gelas", "Sendok", "Garpu", "Sapu", "Pel", 
+        "Jam dinding", "Cermin", "Lampu", "Karpet", "Payung"
+    ],
+    sekolah: [
+        "Buku tulis", "Buku paket", "Pensil", "Pulpen", "Penghapus", "Penggaris", 
+        "Rautan", "Krayon", "Pensil warna", "Spidol", "Kertas gambar", "Buku gambar", 
+        "Tas sekolah", "Tempat pensil", "Papan tulis", "Meja guru", "Kursi siswa", 
+        "Lemari kelas", "Penggaris panjang", "Penghapus papan", "Jam dinding", 
+        "Bendera", "Tiang bendera", "Tempat sampah", "Sapu ijuk", "Gunting"
+    ]
+};
 
 // Canvas Drawing States
 let canvas, ctx;
 let isDrawing = false;
-let currentTool = "brush"; 
+let currentTool = "brush"; // "brush", "eraser", "fill"
 let currentColor = "#000000";
 let currentBrushSize = 5;
 let undoStack = [];
@@ -37,6 +61,17 @@ function selectClass(className) {
         }
     });
     fetchStudentsFromDatabase();
+}
+
+function selectPackage(pkgKey) {
+    selectedPackageKey = pkgKey;
+    document.querySelectorAll('.btn-package').forEach(btn => {
+        if (btn.getAttribute('data-package') === pkgKey) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 }
 
 async function fetchStudentsFromDatabase() {
@@ -96,7 +131,7 @@ function startEntireGame() {
     studentsList = names.map((name, idx) => {
         return { 
             name: name, 
-            soalNo: idx + 1,
+            chosenItem: "",
             skipped: false
         };
     });
@@ -107,18 +142,17 @@ function startEntireGame() {
     
     document.getElementById('setup-panel').classList.add('hidden');
     document.getElementById('finish-panel').classList.add('hidden');
-    document.getElementById('game-panel').classList.remove('hidden');
     
     initCanvas();
     renderPaletteGrid();
-    loadStudentTurn();
+    promptStudentChoice();
 }
 
 function initCanvas() {
     canvas = document.getElementById('drawing-canvas');
     ctx = canvas.getContext('2d');
 
-    canvas.onmousedown = startDrawing;
+    canvas.onmousedown = handleCanvasDown;
     canvas.onmousemove = draw;
     canvas.onmouseup = stopDrawing;
     canvas.onmouseleave = stopDrawing;
@@ -149,7 +183,7 @@ function clearCanvas() {
 }
 
 function saveUndoState() {
-    if (undoStack.length >= 10) undoStack.shift();
+    if (undoStack.length >= 15) undoStack.shift();
     undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
 }
 
@@ -160,14 +194,78 @@ function undoCanvas() {
     }
 }
 
-function startDrawing(e) {
+function promptStudentChoice() {
+    if (currentIndex >= studentsList.length) {
+        isGameActive = false;
+        endAllTurns();
+        return;
+    }
+
+    const student = studentsList[currentIndex];
+    if (student.skipped) {
+        currentIndex++;
+        promptStudentChoice();
+        return;
+    }
+
+    document.getElementById('modal-student-name').textContent = student.name;
+    document.getElementById('modal-package-name').textContent = selectedPackageKey.toUpperCase();
+    
+    const selectEl = document.getElementById('package-item-select');
+    selectEl.innerHTML = '';
+    
+    let items = packagesData[selectedPackageKey] || [];
+    items.forEach(item => {
+        let opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        selectEl.appendChild(opt);
+    });
+
+    document.getElementById('custom-item-input').value = "";
+    document.getElementById('student-choice-modal').style.display = 'flex';
+}
+
+function confirmStudentChoice() {
+    const customInput = document.getElementById('custom-item-input').value.trim();
+    const selectEl = document.getElementById('package-item-select').value;
+    
+    let chosen = customInput !== "" ? customInput : selectEl;
+    studentsList[currentIndex].chosenItem = chosen;
+
+    document.getElementById('student-choice-modal').style.display = 'none';
+    document.getElementById('game-panel').classList.remove('hidden');
+
+    document.getElementById('current-player').textContent = studentsList[currentIndex].name;
+    document.getElementById('target-soal-badge').textContent = `Objek: ${chosen}`;
+
+    undoStack = [];
+    clearCanvas();
+
+    // Jalankan Timer 3 Menit (180 detik)
+    timeLeft = 180;
+    document.getElementById('timer').textContent = timeLeft;
+    startTimer();
+    renderSidebarList();
+}
+
+function handleCanvasDown(e) {
+    if (currentTool === "fill") {
+        saveUndoState();
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.floor(e.clientX - rect.left);
+        const y = Math.floor(e.clientY - rect.top);
+        floodFill(x, y, hexToRgba(currentColor));
+        return;
+    }
+
     isDrawing = true;
     saveUndoState();
     draw(e);
 }
 
 function draw(e) {
-    if (!isDrawing) return;
+    if (!isDrawing || currentTool === "fill") return;
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -197,7 +295,11 @@ function stopDrawing() {
 function setTool(tool) {
     currentTool = tool;
     document.getElementById('tool-brush').classList.toggle('active', tool === 'brush');
+    document.getElementById('tool-fill').classList.toggle('active', tool === 'fill');
     document.getElementById('tool-eraser').classList.toggle('active', tool === 'eraser');
+    
+    // Sembunyikan slider ukuran jika menggunakan alat Cat Tumpah
+    document.getElementById('brush-size-group').style.display = (tool === 'fill') ? 'none' : 'flex';
 }
 
 function updateBrushSize(val) {
@@ -207,7 +309,7 @@ function updateBrushSize(val) {
 
 function setCurrentColor(hex) {
     currentColor = hex;
-    setTool('brush');
+    if (currentTool === 'eraser') setTool('brush');
 }
 
 function renderPaletteGrid() {
@@ -225,31 +327,85 @@ function renderPaletteGrid() {
     });
 }
 
-function loadStudentTurn() {
-    if (currentIndex >= studentsList.length) {
-        isGameActive = false;
-        endAllTurns();
+// Algoritma Flood Fill (Cat Otomatis)
+function hexToRgba(hex) {
+    let bigint = parseInt(hex.replace('#',''), 16);
+    let r = (bigint >> 16) & 255;
+    let g = (bigint >> 8) & 255;
+    let b = bigint & 255;
+    return [r, g, b, 255];
+}
+
+function floodFill(startX, startY, fillColor) {
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const startIndex = (startY * width + startX) * 4;
+    const startR = data[startIndex];
+    const startG = data[startIndex + 1];
+    const startB = data[startIndex + 2];
+    const startA = data[startIndex + 3];
+
+    // Jika warna yang diklik sama persis dengan warna isi, hentikan
+    if (startR === fillColor[0] && startG === fillColor[1] && startB === fillColor[2] && startA === fillColor[3]) {
         return;
     }
 
-    const currentStudent = studentsList[currentIndex];
-    if (currentStudent.skipped) {
-        currentIndex++;
-        loadStudentTurn();
-        return;
+    const queue = [[startX, startY]];
+    const matchedColor = (r, g, b, a) => {
+        return Math.abs(r - startR) < 30 && 
+               Math.abs(g - startG) < 30 && 
+               Math.abs(b - startB) < 30 && 
+               Math.abs(a - startA) < 30;
+    };
+
+    while (queue.length > 0) {
+        const [x, y] = queue.pop();
+        let currentIdx = (y * width + x) * 4;
+
+        if (x < 0 || x >= width || y < 0 || y >= height) continue;
+        if (!matchedColor(data[currentIdx], data[currentIdx+1], data[currentIdx+2], data[currentIdx+3])) continue;
+
+        let westX = x;
+        let eastX = x;
+
+        // Gerak ke kiri
+        while (westX >= 0 && matchedColor(data[(y * width + westX) * 4], data[(y * width + westX) * 4 + 1], data[(y * width + westX) * 4 + 2], data[(y * width + westX) * 4 + 3])) {
+            westX--;
+        }
+        westX++;
+
+        // Gerak ke kanan
+        while (eastX < width && matchedColor(data[(y * width + eastX) * 4], data[(y * width + eastX) * 4 + 1], data[(y * width + eastX) * 4 + 2], data[(y * width + eastX) * 4 + 3])) {
+            eastX++;
+        }
+        eastX--;
+
+        for (let cx = westX; cx <= eastX; cx++) {
+            let idx = (y * width + cx) * 4;
+            data[idx] = fillColor[0];
+            data[idx + 1] = fillColor[1];
+            data[idx + 2] = fillColor[2];
+            data[idx + 3] = fillColor[3];
+
+            if (y > 0) {
+                let upIdx = ((y - 1) * width + cx) * 4;
+                if (matchedColor(data[upIdx], data[upIdx+1], data[upIdx+2], data[upIdx+3])) {
+                    queue.push([cx, y - 1]);
+                }
+            }
+            if (y < height - 1) {
+                let downIdx = ((y + 1) * width + cx) * 4;
+                if (matchedColor(data[downIdx], data[downIdx+1], data[downIdx+2], data[downIdx+3])) {
+                    queue.push([cx, y + 1]);
+                }
+            }
+        }
     }
 
-    document.getElementById('current-player').textContent = currentStudent.name;
-    document.getElementById('target-soal-badge').textContent = `Siswa ${currentIndex + 1} / ${studentsList.length}`;
-    
-    undoStack = [];
-    clearCanvas();
-    
-    // Setel ulang dan jalankan Timer 2 Menit (120 detik)
-    timeLeft = 120;
-    document.getElementById('timer').textContent = timeLeft;
-    startTimer();
-    renderSidebarList();
+    ctx.putImageData(imgData, 0, 0);
 }
 
 function startTimer() {
@@ -268,7 +424,11 @@ function handleTimeUp() {
     const student = studentsList[currentIndex];
     const imageBase64 = canvas.toDataURL("image/png");
     
-    studentResults[student.name] = { imageData: imageBase64, status: "Waktu Habis" };
+    studentResults[student.name] = { 
+        item: student.chosenItem, 
+        imageData: imageBase64, 
+        status: "Waktu Habis" 
+    };
     saveStudentScoreToDatabase(student, imageBase64, "Waktu Habis");
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
@@ -283,7 +443,7 @@ function handleTimeUp() {
 function proceedNextAfterTimeUp() {
     document.getElementById('timeup-overlay').style.display = 'none';
     currentIndex++;
-    loadStudentTurn();
+    promptStudentChoice();
 }
 
 function triggerSelesaiButton() {
@@ -292,11 +452,13 @@ function triggerSelesaiButton() {
     const imageBase64 = canvas.toDataURL("image/png");
     
     studentResults[student.name] = { 
+        item: student.chosenItem,
         imageData: imageBase64, 
         status: "Selesai" 
     };
     
     saveStudentScoreToDatabase(student, imageBase64, "Selesai");
+    document.getElementById('game-panel').classList.add('hidden');
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
@@ -310,20 +472,21 @@ function triggerSelesaiButton() {
 function closeTurnAlert() {
     document.getElementById('turn-alert-overlay').style.display = 'none';
     currentIndex++;
-    loadStudentTurn();
+    promptStudentChoice();
 }
 
 function skipCurrentStudent() {
     clearInterval(countdown);
     const student = studentsList[currentIndex];
     student.skipped = true;
-    studentResults[student.name] = { imageData: null, status: "Tidak Hadir (Skipped)" };
+    studentResults[student.name] = { item: "-", imageData: null, status: "Tidak Hadir (Skipped)" };
     saveStudentScoreToDatabase(student, "", "Tidak Hadir (Skipped)");
+    document.getElementById('game-panel').classList.add('hidden');
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
         currentIndex++;
-        loadStudentTurn();
+        promptStudentChoice();
     } else {
         endAllTurns();
     }
@@ -338,9 +501,11 @@ function saveStudentScoreToDatabase(student, imageBase64, statusVal) {
 
     let payload = {
         kelas: selectedClass,
+        package: selectedPackageKey,
         type: "appendSingle",
         result: {
             nama: student.name,
+            objek: student.chosenItem,
             gambar: imageBase64,
             status: statusVal,
             waktu: new Date().toLocaleString('id-ID')
@@ -403,7 +568,7 @@ function endAllTurns() {
     const tbody = document.getElementById('result-table-body');
     tbody.innerHTML = '';
     studentsList.forEach((stu, idx) => {
-        let res = studentResults[stu.name] || { imageData: null, status: "-" };
+        let res = studentResults[stu.name] || { item: "-", imageData: null, status: "-" };
         const tr = document.createElement('tr');
         
         let actionBtn = res.imageData ? `<button class="btn btn-glow btn-sm" onclick="openImageModal('${stu.name}', '${res.imageData}')"><i class="fas fa-palette"></i> Lihat Gambar</button>` : '-';
@@ -411,6 +576,7 @@ function endAllTurns() {
         tr.innerHTML = `
             <td>${idx + 1}</td>
             <td>${stu.name}</td>
+            <td><strong>${stu.skipped ? '-' : res.item}</strong></td>
             <td>${stu.skipped ? 'Tidak Hadir (Skipped)' : res.status}</td>
             <td>${actionBtn}</td>
         `;
@@ -419,7 +585,7 @@ function endAllTurns() {
 }
 
 function openImageModal(studentName, imgData) {
-    document.getElementById('modal-title').innerHTML = `<i class="fas fa-palette"></i> Hasil Gambar: ${studentName}`;
+    document.getElementById('modal-preview-title').innerHTML = `<i class="fas fa-palette"></i> Hasil Gambar: ${studentName}`;
     document.getElementById('modal-img-preview').src = imgData;
     document.getElementById('image-modal').style.display = 'flex';
 }
