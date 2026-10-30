@@ -77,7 +77,7 @@ function processAdminLogin() {
 
 function openAdminDashboard() {
     document.getElementById('admin-dashboard-page').style.display = 'flex';
-    switchAdminClass(selectedClass);
+    switchAdminClass(selectedClass === 'Contohkan' ? '5A' : selectedClass);
 
     if (adminInterval) clearInterval(adminInterval);
     adminInterval = setInterval(() => {
@@ -142,9 +142,8 @@ async function fetchAdminDatabaseData(isBackground = false) {
     }
 }
 
-// Tombol Reset Sesi dari Halaman Menggambar (Game Panel)
 function adminResetSession() {
-    if (confirm("Yakin ingin melakukan RESET (Mulai Ulang Sesi Siswa)?")) {
+    if (confirm("Yakin ingin melakukan RESET (Mulai Ulang Sesi)?")) {
         clearInterval(countdown);
         isGameActive = false;
         
@@ -159,7 +158,7 @@ function adminResetSession() {
         takenObjects = [];
         
         fetchStudentsFromDatabase();
-        alert("Sesi siswa berhasil direset ke halaman awal.");
+        alert("Sesi berhasil direset ke halaman awal.");
     }
 }
 
@@ -190,8 +189,13 @@ async function fetchStudentsFromDatabase() {
     const sidebarClassLabel = document.getElementById('sidebar-class-label');
     const headerClassBadge = document.getElementById('header-class-badge');
 
-    headerClassBadge.textContent = `Kelas ${selectedClass}`;
-    sidebarClassLabel.textContent = `Kelas ${selectedClass} (Database)`;
+    headerClassBadge.textContent = selectedClass === 'Contohkan' ? 'Mode Contoh' : `Kelas ${selectedClass}`;
+    sidebarClassLabel.textContent = selectedClass === 'Contohkan' ? 'Mode Contoh (Tanpa Timer)' : `Kelas ${selectedClass} (Database)`;
+
+    if (selectedClass === 'Contohkan') {
+        setupStudentUI(["Siswa Contoh 1", "Siswa Contoh 2", "Siswa Contoh 3"]);
+        return;
+    }
 
     if (GS_WEB_APP_URL && GS_WEB_APP_URL !== "PASTE_URL_WEB_APP_GS_ANDA_DI_SINI") {
         try {
@@ -244,11 +248,11 @@ function startEntireGame() {
 
     let names = window.rawDatabaseNames || [];
     if(names.length === 0) {
-        alert("Daftar siswa kosong atau gagal dimuat dari database!");
+        alert("Daftar siswa kosong atau gagal dimuat!");
         return;
     }
 
-    let randomizedNames = shuffleArray(names);
+    let randomizedNames = (selectedClass === 'Contohkan') ? names : shuffleArray(names);
 
     studentsList = randomizedNames.map((name) => {
         return { name: name, chosenItem: "", skipped: false };
@@ -263,6 +267,13 @@ function startEntireGame() {
     document.getElementById('finish-panel').classList.add('hidden');
     document.getElementById('app-header-el').classList.add('hidden');
     document.getElementById('top-nav-admin').classList.add('hidden');
+
+    // Sembunyikan timer jika mode Contohkan
+    if (selectedClass === 'Contohkan') {
+        document.getElementById('timer-box').style.display = 'none';
+    } else {
+        document.getElementById('timer-box').style.display = 'block';
+    }
     
     initCanvas();
     renderPaletteGrid();
@@ -369,7 +380,7 @@ function promptStudentChoice() {
     if (availableItems.length === 0) {
         let opt = document.createElement('option');
         opt.value = "";
-        opt.textContent = "Semua objek di paket ini sudah diambil siswa lain!";
+        opt.textContent = "Semua objek di paket ini sudah diambil!";
         selectEl.appendChild(opt);
     } else {
         availableItems.forEach(item => {
@@ -403,9 +414,11 @@ function confirmStudentChoice() {
     undoStack = [];
     clearCanvas();
 
-    timeLeft = 180;
-    document.getElementById('timer').textContent = timeLeft;
-    startTimer();
+    if (selectedClass !== 'Contohkan') {
+        timeLeft = 180;
+        document.getElementById('timer').textContent = timeLeft;
+        startTimer();
+    }
     renderSidebarList();
 }
 
@@ -648,6 +661,7 @@ function evaluateDrawingWithAI() {
 }
 
 function startTimer() {
+    if (selectedClass === 'Contohkan') return;
     clearInterval(countdown);
     countdown = setInterval(() => {
         timeLeft--;
@@ -671,14 +685,16 @@ function handleTimeUp() {
         desc: aiResult.desc,
         status: "Waktu Habis (Dinilai AI)" 
     };
-    saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Waktu Habis");
+    if (selectedClass !== 'Contohkan') {
+        saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Waktu Habis");
+    }
     renderSidebarList();
 
     const nextIndex = getNextValidIndex(currentIndex + 1);
     if (nextIndex < studentsList.length) {
         document.getElementById('timeup-message').innerHTML = `Waktu habis!<br><span style="color: #10b981; font-weight: bold; font-size: 18px;">${studentsList[nextIndex].name}..</span>`;
     } else {
-        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai untuk semua siswa.`;
+        document.getElementById('timeup-message').innerHTML = `Waktu habis!<br>Sesi selesai.`;
     }
     document.getElementById('timeup-overlay').style.display = 'flex';
 }
@@ -690,7 +706,9 @@ function proceedNextAfterTimeUp() {
 }
 
 function triggerSelesaiButton() {
-    clearInterval(countdown);
+    if (selectedClass !== 'Contohkan') {
+        clearInterval(countdown);
+    }
     const student = studentsList[currentIndex];
     const imageBase64 = canvas.toDataURL("image/png");
     const aiResult = evaluateDrawingWithAI();
@@ -703,7 +721,9 @@ function triggerSelesaiButton() {
         status: "Selesai (Dinilai AI)" 
     };
     
-    saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Selesai");
+    if (selectedClass !== 'Contohkan') {
+        saveStudentScoreToDatabase(student, imageBase64, aiResult.score, "Selesai");
+    }
     document.getElementById('game-panel').classList.add('hidden');
     renderSidebarList();
 
@@ -723,12 +743,16 @@ function closeTurnAlert() {
 }
 
 function skipCurrentStudent() {
-    if (!confirm("Yakin ingin menandai siswa ini absen / tidak hadir (skip)?")) return;
-    clearInterval(countdown);
+    if (!confirm("Yakin ingin melewati siswa ini (skip)?")) return;
+    if (selectedClass !== 'Contohkan') {
+        clearInterval(countdown);
+    }
     const student = studentsList[currentIndex];
     student.skipped = true;
-    studentResults[student.name] = { item: "-", imageData: null, score: "0%", desc: "Siswa absen atau tidak hadir.", status: "Tidak Hadir (Skipped)" };
-    saveStudentScoreToDatabase(student, "", "0%", "Tidak Hadir (Skipped)");
+    studentResults[student.name] = { item: "-", imageData: null, score: "0%", desc: "Dilewati.", status: "Dilewati (Skipped)" };
+    if (selectedClass !== 'Contohkan') {
+        saveStudentScoreToDatabase(student, "", "0%", "Dilewati (Skipped)");
+    }
     document.getElementById('game-panel').classList.add('hidden');
     renderSidebarList();
 
@@ -742,7 +766,7 @@ function skipCurrentStudent() {
 }
 
 function saveStudentScoreToDatabase(student, imageBase64, scoreVal, statusVal) {
-    if (student.skipped) return;
+    if (student.skipped || selectedClass === 'Contohkan') return;
 
     let payload = {
         kelas: selectedClass,
@@ -806,7 +830,11 @@ function endAllTurns() {
     document.getElementById('finish-panel').classList.remove('hidden');
     renderSidebarList();
 
-    document.getElementById('sync-status-msg').textContent = `✅ Sesi selesai! Seluruh nilai AI tersimpan di Google Spreadsheet (Sheet Data_${selectedClass})[cite: 2, 3].`;
+    const infoText = (selectedClass === 'Contohkan') 
+        ? `✨ Mode Contohkan Selesai! (Data tidak disimpan ke Google Spreadsheet).` 
+        : `✅ Sesi selesai! Seluruh nilai AI tersimpan di Google Spreadsheet (Sheet Data_${selectedClass})[cite: 2, 3].`;
+
+    document.getElementById('sync-status-msg').textContent = infoText;
 
     const tbody = document.getElementById('result-table-body');
     tbody.innerHTML = '';
@@ -821,7 +849,7 @@ function endAllTurns() {
             <td>${stu.name}</td>
             <td><strong>${stu.skipped ? '-' : res.item}</strong></td>
             <td><strong style="color: #38bdf8;">${stu.skipped ? '0%' : res.score}</strong></td>
-            <td>${stu.skipped ? 'Tidak Hadir (Skipped)' : res.status}</td>
+            <td>${stu.skipped ? 'Dilewati' : res.status}</td>
             <td>${actionBtn}</td>
         `;
         tbody.appendChild(tr);
@@ -849,7 +877,7 @@ document.getElementById('restart-btn').onclick = () => {
 };
 
 document.addEventListener('fullscreenchange', () => {
-    if (isGameActive && !document.fullscreenElement) {
+    if (isGameActive && selectedClass !== 'Contohkan' && !document.fullscreenElement) {
         document.getElementById('warning-overlay').style.display = 'flex';
         clearInterval(countdown);
     }
