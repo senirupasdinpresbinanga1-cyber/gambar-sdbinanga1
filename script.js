@@ -280,17 +280,25 @@ function startEntireGame() {
     promptStudentChoice();
 }
 
-function getCanvasCoordinates(e) {
+// ==========================================
+// PENGAMBILAN KORDINAT AKURAT (MOUSE & TOUCH)
+// ==========================================
+function getEventCoordinates(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
-    let clientX = e.clientX;
-    let clientY = e.clientY;
+    let clientX, clientY;
 
     if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].clientX;
         clientY = e.touches[0].clientY;
+    } else if (e.changedTouches && e.changedTouches.length > 0) {
+        clientX = e.changedTouches[0].clientX;
+        clientY = e.changedTouches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
     }
 
     return {
@@ -300,48 +308,55 @@ function getCanvasCoordinates(e) {
 }
 
 // ==========================================
-// INISIALISASI KANVAS & DUKUNGAN LAYAR SENTUH
+// INISIALISASI KANVAS & FIX TOTAL TOUCHSCREEN
 // ==========================================
 function initCanvas() {
     canvas = document.getElementById('drawing-canvas');
     ctx = canvas.getContext('2d');
 
-    // Event Mouse
-    canvas.onmousedown = (e) => {
-        e.preventDefault();
-        handleCanvasDown(e);
-    };
-    canvas.onmousemove = (e) => {
-        e.preventDefault();
-        draw(e);
-    };
-    canvas.onmouseup = (e) => {
-        e.preventDefault();
-        stopDrawing();
-    };
-    canvas.onmouseleave = (e) => {
-        stopDrawing();
-    };
+    // Hapus event lama jika ada
+    canvas.onmousedown = null;
+    canvas.onmousemove = null;
+    canvas.onmouseup = null;
+    canvas.onmouseleave = null;
 
-    // Event Touch (Layar Sentuh HP / Tablet / Touchscreen)
-    canvas.ontouchstart = (e) => {
+    // Listener Mouse
+    canvas.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        const coords = getCanvasCoordinates(e);
-        handleCanvasDown(coords);
-    };
-    canvas.ontouchmove = (e) => {
+        startAction(getEventCoordinates(e));
+    });
+    canvas.addEventListener('mousemove', (e) => {
         e.preventDefault();
-        const coords = getCanvasCoordinates(e);
-        draw(coords);
-    };
-    canvas.ontouchend = (e) => {
+        moveAction(getEventCoordinates(e));
+    });
+    canvas.addEventListener('mouseup', (e) => {
         e.preventDefault();
-        stopDrawing();
-    };
-    canvas.ontouchcancel = (e) => {
+        stopAction();
+    });
+    canvas.addEventListener('mouseleave', (e) => {
+        stopAction();
+    });
+
+    // Listener Touch (Layar Sentuh HP / Tablet / Touchscreen) - Menggunakan { passive: false } agar e.preventDefault() berfungsi sempurna
+    canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        stopDrawing();
-    };
+        startAction(getEventCoordinates(e));
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        moveAction(getEventCoordinates(e));
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        stopAction();
+    }, { passive: false });
+
+    canvas.addEventListener('touchcancel', (e) => {
+        e.preventDefault();
+        stopAction();
+    }, { passive: false });
 }
 
 function clearCanvas() {
@@ -430,9 +445,7 @@ function confirmStudentChoice() {
     renderSidebarList();
 }
 
-function handleCanvasDown(e) {
-    const coords = e.clientX !== undefined ? getCanvasCoordinates(e) : e;
-
+function startAction(coords) {
     if (currentTool === "fill") {
         saveUndoState();
         floodFill(Math.floor(coords.x), Math.floor(coords.y), hexToRgba(currentColor));
@@ -446,15 +459,14 @@ function handleCanvasDown(e) {
     ctx.moveTo(coords.x, coords.y);
     ctx.lineWidth = currentBrushSize;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.strokeStyle = (currentTool === "eraser") ? "#ffffff" : currentColor;
     ctx.lineTo(coords.x + 0.1, coords.y + 0.1);
     ctx.stroke();
 }
 
-function draw(e) {
+function moveAction(coords) {
     if (!isDrawing || currentTool === "fill") return;
-
-    const coords = e.clientX !== undefined ? getCanvasCoordinates(e) : e;
 
     ctx.lineWidth = currentBrushSize;
     ctx.lineCap = "round";
@@ -472,7 +484,7 @@ function draw(e) {
     ctx.moveTo(coords.x, coords.y);
 }
 
-function stopDrawing() {
+function stopAction() {
     if (!isDrawing) return;
     isDrawing = false;
     ctx.beginPath();
@@ -889,7 +901,7 @@ function endAllTurns() {
 
     const infoText = (selectedClass === 'Contohkan') 
         ? `✨ Mode Contohkan Selesai! (Data tidak disimpan ke Google Spreadsheet).` 
-        : `✅ Sesi selesai! Seluruh nilai AI tersimpan di Google Spreadsheet (Sheet Data_${selectedClass}).`;
+        : `✅ Sesi selesai! Seluruh nilai AI tersimpan di Google Spreadsheet (Sheet Data_${selectedClass})[cite: 2, 3].`;
 
     document.getElementById('sync-status-msg').textContent = infoText;
 
