@@ -299,10 +299,14 @@ function getCanvasCoordinates(e) {
     };
 }
 
+// ==========================================
+// INISIALISASI KANVAS & DUKUNGAN LAYAR SENTUH
+// ==========================================
 function initCanvas() {
     canvas = document.getElementById('drawing-canvas');
     ctx = canvas.getContext('2d');
 
+    // Event Mouse
     canvas.onmousedown = (e) => {
         e.preventDefault();
         handleCanvasDown(e);
@@ -319,6 +323,7 @@ function initCanvas() {
         stopDrawing();
     };
 
+    // Event Touch (Layar Sentuh HP / Tablet / Touchscreen)
     canvas.ontouchstart = (e) => {
         e.preventDefault();
         const coords = getCanvasCoordinates(e);
@@ -330,6 +335,10 @@ function initCanvas() {
         draw(coords);
     };
     canvas.ontouchend = (e) => {
+        e.preventDefault();
+        stopDrawing();
+    };
+    canvas.ontouchcancel = (e) => {
         e.preventDefault();
         stopDrawing();
     };
@@ -422,7 +431,7 @@ function confirmStudentChoice() {
 }
 
 function handleCanvasDown(e) {
-    const coords = getCanvasCoordinates(e);
+    const coords = e.clientX !== undefined ? getCanvasCoordinates(e) : e;
 
     if (currentTool === "fill") {
         saveUndoState();
@@ -445,7 +454,7 @@ function handleCanvasDown(e) {
 function draw(e) {
     if (!isDrawing || currentTool === "fill") return;
 
-    const coords = getCanvasCoordinates(e);
+    const coords = e.clientX !== undefined ? getCanvasCoordinates(e) : e;
 
     ctx.lineWidth = currentBrushSize;
     ctx.lineCap = "round";
@@ -573,7 +582,7 @@ function floodFill(startX, startY, fillColor) {
 }
 
 // ==========================================
-// SISTEM PENILAIAN BARU (BERDASARKAN RUBRIK AI)
+// SISTEM PENILAIAN RUBRIK AI
 // ==========================================
 function evaluateDrawingWithAI() {
     const width = canvas.width;
@@ -789,9 +798,6 @@ function closeTurnAlert() {
     promptStudentChoice();
 }
 
-// ==========================================
-// SKIP SISWA (LANGSUNG TANPA POPUP / KONFIRMASI)
-// ==========================================
 function skipCurrentStudent() {
     if (selectedClass !== 'Contohkan') {
         clearInterval(countdown);
