@@ -228,6 +228,13 @@ body {
     border-color: #38bdf8;
 }
 
+.setup-label {
+    font-size: 13px;
+    color: #cbd5e1;
+    margin-top: 10px;
+    display: block;
+}
+
 .rule-list {
     margin: 10px 0;
     padding-left: 20px;
@@ -270,6 +277,16 @@ body {
 .highlight-name {
     color: #38bdf8;
     font-size: 16px;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.target-badge {
+    background: #334155;
+    color: #f59e0b;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12px;
 }
 
 .timer-display {
@@ -321,6 +338,7 @@ body {
 
 .box-label {
     font-size: 11px;
+    color: #94a3b8;
 }
 
 .palette-grid {
