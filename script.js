@@ -599,13 +599,11 @@ function evaluateDrawingWithAI() {
             let g = data[idx + 1];
             let b = data[idx + 2];
 
-            // Cek piksel gambar (tidak putih)
             if (!(r > 245 && g > 245 && b > 245)) {
                 nonWhitePixels++;
                 grid[y][x] = 1;
                 uniqueColors.add(`${Math.floor(r / 32)},${Math.floor(g / 32)},${Math.floor(b / 32)}`);
                 
-                // Hitung piksel berwarna (selain hitam garis & putih latar)
                 if (!(r < 30 && g < 30 && b < 30)) {
                     coloredPixels++;
                 }
@@ -618,7 +616,6 @@ function evaluateDrawingWithAI() {
     let completionRatio = nonWhitePixels / totalPixels;
     let colorFillRatio = coloredPixels / (nonWhitePixels || 1);
 
-    // Hitung edge transitions untuk kerapian garis/pewarnaan
     for (let y = 1; y < height - 1; y += 2) {
         for (let x = 1; x < width - 1; x += 2) {
             if (grid[y][x] === 1) {
@@ -631,10 +628,6 @@ function evaluateDrawingWithAI() {
     }
     let jaggedRatio = edgeTransitions / (nonWhitePixels || 1);
 
-    // ==========================================
-    // PERHITUNGAN SKOR 5 ASPEK (SKALA 0-100)
-    // ==========================================
-    // 1. Kesesuaian Objek & Kelengkapan (Bobot 30%)
     let scoreObjek = 0;
     if (completionRatio < 0.02) scoreObjek = 10;
     else if (completionRatio < 0.05) scoreObjek = 40;
@@ -642,25 +635,17 @@ function evaluateDrawingWithAI() {
     else if (completionRatio < 0.20) scoreObjek = 85;
     else scoreObjek = 95;
 
-    // 2. Kerapian & Penyelesaian Pewarnaan (Bobot 25%)
     let scoreKerapian = Math.max(20, Math.min(100, Math.round(100 - (jaggedRatio * 120) + (colorFillRatio * 30))));
 
-    // 3. Komposisi & Harmoni Warna (Bobot 25%)
     let colorCount = uniqueColors.size;
     let scoreHarmoni = 40;
     if (colorCount >= 2 && colorCount <= 4) scoreHarmoni = 75;
     else if (colorCount > 4 && colorCount <= 10) scoreHarmoni = 92;
     else if (colorCount > 10) scoreHarmoni = 85;
 
-    // 4. Kreativitas & Detail Tambahan (Bobot 10%)
     let scoreKreativitas = Math.min(100, 50 + (colorCount * 5) + (completionRatio > 0.15 ? 20 : 0));
-
-    // 5. Teknik Penggunaan Alat Digital (Bobot 10%)
     let scoreTeknik = Math.max(30, Math.min(100, Math.round(90 - (jaggedRatio * 50))));
 
-    // ==========================================
-    // SISTEM PENGAMAN NILAI (SAFETY GUARD) WAJIB
-    // ==========================================
     let safetyCap = 100;
     let safetyStatusText = "Objek lengkap dan pewarnaan rapi (Berpeluang 85–100).";
 
@@ -674,7 +659,6 @@ function evaluateDrawingWithAI() {
         safetyStatusText = "Objek lengkap tetapi pewarnaan kurang rapi.";
     }
 
-    // Hitung Nilai Akhir Berdasarkan Bobot Rubrik
     let rawFinalScore = 
         (scoreObjek * 0.30) +
         (scoreKerapian * 0.25) +
@@ -685,9 +669,6 @@ function evaluateDrawingWithAI() {
     let finalScore = Math.min(rawFinalScore, safetyCap);
     finalScore = Math.round(finalScore);
 
-    // Deskripsi Analisis, Kelebihan, dan Kekurangan
-    let descText = `[${safetyStatusText}] -> Rincian Skor: Kesesuaian Objek (${Math.round(scoreObjek)}), Kerapian (${Math.round(scoreKerapian)}), Harmoni Warna (${Math.round(scoreHarmoni)}), Kreativitas (${Math.round(scoreKreativitas)}), Teknik Digital (${Math.round(scoreTeknik)}).`;
-    
     let kelebihan = completionRatio >= 0.08 ? "Gambar memiliki bentuk objek yang cukup jelas dengan variasi warna yang menarik." : "Pengerjaan awal sudah dimulai.";
     let kekurangan = scoreKerapian < 70 ? "Pewarnaan dan garis tepi masih kurang rapi atau belum merata." : "Perlu penambahan detail ornament pendukung agar lebih artistik.";
 
@@ -698,7 +679,7 @@ Analisis AI:
 
 Rincian Skor Aspek:
 1. Kesesuaian Objek: ${Math.round(scoreObjek)} / 100 (Bobot 30%)
-2. Kerapian Pewarnean: ${Math.round(scoreKerapian)} / 100 (Bobot 25%)
+2. Kerapian Pewarnaan: ${Math.round(scoreKerapian)} / 100 (Bobot 25%)
 3. Harmoni Warna: ${Math.round(scoreHarmoni)} / 100 (Bobot 25%)
 4. Kreativitas & Detail: ${Math.round(scoreKreativitas)} / 100 (Bobot 10%)
 5. Teknik Digital: ${Math.round(scoreTeknik)} / 100 (Bobot 10%)
@@ -808,17 +789,21 @@ function closeTurnAlert() {
     promptStudentChoice();
 }
 
+// ==========================================
+// SKIP SISWA (LANGSUNG TANPA POPUP / KONFIRMASI)
+// ==========================================
 function skipCurrentStudent() {
-    if (!confirm("Yakin ingin melewati siswa ini (skip)?")) return;
     if (selectedClass !== 'Contohkan') {
         clearInterval(countdown);
     }
     const student = studentsList[currentIndex];
     student.skipped = true;
     studentResults[student.name] = { item: "-", imageData: null, score: "0%", desc: "Dilewati.", status: "Dilewati (Skipped)" };
+    
     if (selectedClass !== 'Contohkan') {
         saveStudentScoreToDatabase(student, "", "0%", "Dilewati (Skipped)");
     }
+    
     document.getElementById('game-panel').classList.add('hidden');
     renderSidebarList();
 
