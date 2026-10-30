@@ -268,7 +268,6 @@ function startEntireGame() {
     document.getElementById('app-header-el').classList.add('hidden');
     document.getElementById('top-nav-admin').classList.add('hidden');
 
-    // Sembunyikan timer jika mode Contohkan
     if (selectedClass === 'Contohkan') {
         document.getElementById('timer-box').style.display = 'none';
     } else {
@@ -573,6 +572,9 @@ function floodFill(startX, startY, fillColor) {
     ctx.putImageData(imgData, 0, 0);
 }
 
+// ==========================================
+// SISTEM PENILAIAN BARU (BERDASARKAN RUBRIK AI)
+// ==========================================
 function evaluateDrawingWithAI() {
     const width = canvas.width;
     const height = canvas.height;
@@ -581,8 +583,9 @@ function evaluateDrawingWithAI() {
 
     let totalPixels = width * height;
     let nonWhitePixels = 0;
-    let edgeTransitions = 0; 
+    let coloredPixels = 0;
     let uniqueColors = new Set();
+    let edgeTransitions = 0;
     let grid = new Array(height);
 
     for (let y = 0; y < height; y++) {
@@ -596,32 +599,26 @@ function evaluateDrawingWithAI() {
             let g = data[idx + 1];
             let b = data[idx + 2];
 
+            // Cek piksel gambar (tidak putih)
             if (!(r > 245 && g > 245 && b > 245)) {
                 nonWhitePixels++;
                 grid[y][x] = 1;
                 uniqueColors.add(`${Math.floor(r / 32)},${Math.floor(g / 32)},${Math.floor(b / 32)}`);
+                
+                // Hitung piksel berwarna (selain hitam garis & putih latar)
+                if (!(r < 30 && g < 30 && b < 30)) {
+                    coloredPixels++;
+                }
             } else {
                 grid[y][x] = 0;
             }
         }
     }
 
-    if (nonWhitePixels < 800) {
-        return {
-            score: `${Math.floor(Math.random() * 10) + 10}%`,
-            desc: "AI Penilai (Pengaman Nilai): Hanya sebagian kecil objek yang dikerjakan. Nilai dibatasi maksimal 20."
-        };
-    }
+    let completionRatio = nonWhitePixels / totalPixels;
+    let colorFillRatio = coloredPixels / (nonWhitePixels || 1);
 
-    let fillRatio = nonWhitePixels / totalPixels;
-    if (fillRatio < 0.04) {
-        let limitedScore = Math.floor(Math.random() * 15) + 35; 
-        return {
-            score: `${limitedScore}%`,
-            desc: "AI Penilai (Pengaman Nilai): Objek utama belum lengkap. Nilai dibatasi maksimal 50."
-        };
-    }
-
+    // Hitung edge transitions untuk kerapian garis/pewarnaan
     for (let y = 1; y < height - 1; y += 2) {
         for (let x = 1; x < width - 1; x += 2) {
             if (grid[y][x] === 1) {
@@ -632,32 +629,101 @@ function evaluateDrawingWithAI() {
             }
         }
     }
+    let jaggedRatio = edgeTransitions / (nonWhitePixels || 1);
 
-    let jaggedRatio = edgeTransitions / nonWhitePixels;
+    // ==========================================
+    // PERHITUNGAN SKOR 5 ASPEK (SKALA 0-100)
+    // ==========================================
+    // 1. Kesesuaian Objek & Kelengkapan (Bobot 30%)
+    let scoreObjek = 0;
+    if (completionRatio < 0.02) scoreObjek = 10;
+    else if (completionRatio < 0.05) scoreObjek = 40;
+    else if (completionRatio < 0.10) scoreObjek = 65;
+    else if (completionRatio < 0.20) scoreObjek = 85;
+    else scoreObjek = 95;
 
-    let objCompleteness = Math.min(30, (fillRatio * 150));
-    let cleanlinessScore = Math.max(5, Math.min(25, 25 - (jaggedRatio * 50)));
-    let harmonyScore = Math.min(25, uniqueColors.size * 3.5);
-    let creativityScore = Math.min(10, uniqueColors.size >= 4 ? 10 : 5);
-    let digitalTechScore = Math.min(10, Math.max(4, 10 - (jaggedRatio * 20)));
+    // 2. Kerapian & Penyelesaian Pewarnaan (Bobot 25%)
+    let scoreKerapian = Math.max(20, Math.min(100, Math.round(100 - (jaggedRatio * 120) + (colorFillRatio * 30))));
 
-    let rawTotalScore = Math.round(objCompleteness + cleanlinessScore + harmonyScore + creativityScore + digitalTechScore);
+    // 3. Komposisi & Harmoni Warna (Bobot 25%)
+    let colorCount = uniqueColors.size;
+    let scoreHarmoni = 40;
+    if (colorCount >= 2 && colorCount <= 4) scoreHarmoni = 75;
+    else if (colorCount > 4 && colorCount <= 10) scoreHarmoni = 92;
+    else if (colorCount > 10) scoreHarmoni = 85;
 
-    let finalScore = 0;
-    let statusKondisi = "";
+    // 4. Kreativitas & Detail Tambahan (Bobot 10%)
+    let scoreKreativitas = Math.min(100, 50 + (colorCount * 5) + (completionRatio > 0.15 ? 20 : 0));
 
-    if (jaggedRatio > 0.45 || uniqueColors.size < 2) {
-        finalScore = Math.max(51, Math.min(84, rawTotalScore));
-        statusKondisi = "Objek lengkap tetapi pewarnaan kurang rapi (Mengikuti rubrik).";
-    } else {
-        finalScore = Math.floor(85 + (Math.min(1, rawTotalScore / 100) * 15));
-        finalScore = Math.min(100, finalScore);
-        statusKondisi = "Objek lengkap dan pewarnaan rapi (Berpeluang 85–100).";
+    // 5. Teknik Penggunaan Alat Digital (Bobot 10%)
+    let scoreTeknik = Math.max(30, Math.min(100, Math.round(90 - (jaggedRatio * 50))));
+
+    // ==========================================
+    // SISTEM PENGAMAN NILAI (SAFETY GUARD) WAJIB
+    // ==========================================
+    let safetyCap = 100;
+    let safetyStatusText = "Objek lengkap dan pewarnaan rapi (Berpeluang 85–100).";
+
+    if (completionRatio < 0.03) {
+        safetyCap = 20;
+        safetyStatusText = "Hanya sebagian kecil objek yang dikerjakan (Maksimal nilai 20).";
+    } else if (completionRatio < 0.08) {
+        safetyCap = 50;
+        safetyStatusText = "Objek utama belum lengkap (Maksimal nilai 50).";
+    } else if (scoreKerapian < 50) {
+        safetyStatusText = "Objek lengkap tetapi pewarnaan kurang rapi.";
     }
 
-    let feedback = `AI Penilai (${statusKondisi}) -> Rincian Bobot: Kesesuaian Objek (${Math.round(objCompleteness)}/30), Kerapian (${Math.round(cleanlinessScore)}/25), Harmoni Warna (${Math.round(harmonyScore)}/25), Kreativitas (${Math.round(creativityScore)}/10), Teknik Digital (${Math.round(digitalTechScore)}/10).`;
+    // Hitung Nilai Akhir Berdasarkan Bobot Rubrik
+    let rawFinalScore = 
+        (scoreObjek * 0.30) +
+        (scoreKerapian * 0.25) +
+        (scoreHarmoni * 0.25) +
+        (scoreKreativitas * 0.10) +
+        (scoreTeknik * 0.10);
 
-    return { score: `${finalScore}%`, desc: feedback };
+    let finalScore = Math.min(rawFinalScore, safetyCap);
+    finalScore = Math.round(finalScore);
+
+    // Deskripsi Analisis, Kelebihan, dan Kekurangan
+    let descText = `[${safetyStatusText}] -> Rincian Skor: Kesesuaian Objek (${Math.round(scoreObjek)}), Kerapian (${Math.round(scoreKerapian)}), Harmoni Warna (${Math.round(scoreHarmoni)}), Kreativitas (${Math.round(scoreKreativitas)}), Teknik Digital (${Math.round(scoreTeknik)}).`;
+    
+    let kelebihan = completionRatio >= 0.08 ? "Gambar memiliki bentuk objek yang cukup jelas dengan variasi warna yang menarik." : "Pengerjaan awal sudah dimulai.";
+    let kekurangan = scoreKerapian < 70 ? "Pewarnaan dan garis tepi masih kurang rapi atau belum merata." : "Perlu penambahan detail ornament pendukung agar lebih artistik.";
+
+    let detailedFeedback = `
+Analisis AI:
+- Kondisi Kelengkapan: ${safetyStatusText}
+- Tingkat Area Terisi: ${Math.round(completionRatio * 100)}%
+
+Rincian Skor Aspek:
+1. Kesesuaian Objek: ${Math.round(scoreObjek)} / 100 (Bobot 30%)
+2. Kerapian Pewarnean: ${Math.round(scoreKerapian)} / 100 (Bobot 25%)
+3. Harmoni Warna: ${Math.round(scoreHarmoni)} / 100 (Bobot 25%)
+4. Kreativitas & Detail: ${Math.round(scoreKreativitas)} / 100 (Bobot 10%)
+5. Teknik Digital: ${Math.round(scoreTeknik)} / 100 (Bobot 10%)
+
+Kelebihan:
+- ${kelebihan}
+
+Kekurangan:
+- ${kekurangan}
+
+Saran Perbaikan:
+- Tingkatkan ketelitian dalam merapikan batas garis dan maksimalkan pewarnaan pada seluruh bagian objek.
+    `.trim();
+
+    return { 
+        score: `${finalScore}%`, 
+        desc: detailedFeedback,
+        rawScores: {
+            objek: Math.round(scoreObjek),
+            kerapian: Math.round(scoreKerapian),
+            harmoni: Math.round(scoreHarmoni),
+            kreativitas: Math.round(scoreKreativitas),
+            teknik: Math.round(scoreTeknik)
+        }
+    };
 }
 
 function startTimer() {
@@ -832,7 +898,7 @@ function endAllTurns() {
 
     const infoText = (selectedClass === 'Contohkan') 
         ? `✨ Mode Contohkan Selesai! (Data tidak disimpan ke Google Spreadsheet).` 
-        : `✅ Sesi selesai! Seluruh nilai AI tersimpan di Google Spreadsheet (Sheet Data_${selectedClass})[cite: 2, 3].`;
+        : `✅ Sesi selesai! Seluruh nilai AI tersimpan di Google Spreadsheet (Sheet Data_${selectedClass}).`;
 
     document.getElementById('sync-status-msg').textContent = infoText;
 
@@ -842,7 +908,7 @@ function endAllTurns() {
         let res = studentResults[stu.name] || { item: "-", imageData: null, score: "0%", desc: "-", status: "-" };
         const tr = document.createElement('tr');
         
-        let actionBtn = res.imageData ? `<button class="btn btn-glow btn-sm" onclick="openImageModal('${stu.name}', '${res.imageData}', '${res.score}', '${res.desc}')"><i class="fas fa-robot"></i> Lihat Analisis AI</button>` : '-';
+        let actionBtn = res.imageData ? `<button class="btn btn-glow btn-sm" onclick="openImageModal('${stu.name}', '${res.imageData}', '${res.score}', \`${res.desc}\`)"><i class="fas fa-robot"></i> Lihat Analisis AI</button>` : '-';
 
         tr.innerHTML = `
             <td>${idx + 1}</td>
@@ -860,6 +926,7 @@ function openImageModal(studentName, imgData, score, desc) {
     document.getElementById('modal-preview-title').innerHTML = `<i class="fas fa-robot"></i> Hasil & Analisis Gambar: ${studentName}`;
     document.getElementById('modal-img-preview').src = imgData;
     document.getElementById('ai-score-text').innerHTML = `🤖 Nilai Akurasi AI: <span style="color: #f59e0b;">${score}</span>`;
+    document.getElementById('ai-desc-text').style.whiteSpace = "pre-line";
     document.getElementById('ai-desc-text').textContent = desc;
     document.getElementById('image-modal').style.display = 'flex';
 }
