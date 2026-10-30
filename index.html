@@ -152,10 +152,11 @@
                 <div class="setup-content">
                     <h3>📜 Konfigurasi Sesi Menggambar & Paket Soal</h3>
                     
-                    <label class="setup-label">Pilih Kelas:</label>
+                    <label class="setup-label">Pilih Kelas / Mode:</label>
                     <div class="class-selector-group">
                         <button class="btn-class active" data-class="5A" onclick="selectClass('5A')">🏫 Kelas 5A</button>
                         <button class="btn-class" data-class="5B" onclick="selectClass('5B')">🏫 Kelas 5B</button>
+                        <button class="btn-class" data-class="Contohkan" onclick="selectClass('Contohkan')" style="background: #065f46; border-color: #34d399;">✨ Contohkan</button>
                     </div>
 
                     <label class="setup-label" style="margin-top: 15px;">Pilih Paket Kategori:</label>
@@ -168,7 +169,7 @@
                     <ul class="rule-list">
                         <li>📥 <strong>Database Spreadsheet:</strong> Nama siswa ditarik otomatis dari sheet[cite: 1, 2].</li>
                         <li>🔒 <strong>Sistem Objek Unik:</strong> Objek yang sudah diambil siswa lain otomatis hilang[cite: 2].</li>
-                        <li>⏳ <strong>Batas Waktu:</strong> Durasi menggambar **180 detik (3 menit)** per siswa[cite: 2].</li>
+                        <li>⏳ <strong>Batas Waktu:</strong> Durasi menggambar **180 detik (3 menit)** per siswa (Kecuali mode Contohkan tanpa timer)[cite: 2, 3].</li>
                     </ul>
                     <button id="start-btn" class="btn btn-glow"><i class="fas fa-play"></i> Mulai Sesi Menggambar (Fullscreen)</button>
                 </div>
@@ -182,7 +183,7 @@
                         <h2 id="current-player" class="highlight-name">-</h2>
                         <span id="target-soal-badge" class="target-badge">Objek: -</span>
                     </div>
-                    <div class="timer-display">
+                    <div class="timer-display" id="timer-box">
                         ⏳ Sisa Waktu: <span id="timer">180</span> dtk
                     </div>
                 </div>
